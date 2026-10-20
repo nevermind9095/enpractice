@@ -132,10 +132,11 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .fighter{position:absolute;display:flex;flex-direction:column;gap:6px;z-index:2}
 .f-enemy{right:3%;top:4%;height:60%;width:50%;align-items:flex-end}
 .f-player{left:3%;bottom:4%;height:64%;width:50%;align-items:flex-start;flex-direction:column-reverse}
-.mon{flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:center;width:100%;position:relative}
-.bob{height:100%;display:flex;align-items:flex-end;justify-content:center;animation:bob 2.6s ease-in-out infinite}
+/* Beast art sits in an absolutely positioned box of known size (Safari collapses width:auto SVGs in flex chains). */
+.mon{flex:1 1 0;min-height:0;width:100%;position:relative}
+.bob{position:absolute;inset:0;animation:bob 2.6s ease-in-out infinite}
 .f-enemy .bob{animation-delay:-1.3s}
-.bob .beast{height:100%;width:auto;max-width:100%}
+.bob .beast{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
 .flip{transform:scaleX(-1)}
 .boss-aura .beast{filter:drop-shadow(0 0 14px rgba(255,60,120,.65))}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4%)}}
@@ -256,8 +257,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .half.top{transform:rotate(180deg)}
 .half.p1{background:linear-gradient(0deg,rgba(79,195,255,.10),transparent 70%)}
 .half.p2{background:linear-gradient(0deg,rgba(255,138,76,.10),transparent 70%)}
-.frow{display:flex;align-items:stretch;gap:12px;height:clamp(96px,26%,200px);flex:0 0 auto}
-.frow .mon{flex:0 0 auto;width:auto;aspect-ratio:200/160;height:100%}
+.frow{display:flex;align-items:stretch;gap:12px;height:clamp(96px,12.5vh,200px);height:clamp(96px,12.5dvh,200px);flex:0 0 auto}
+.frow .mon{flex:0 0 34%;width:34%;height:100%}
 .frow .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px}
 .frow .hpbox{min-width:0}
 .frow .who{display:flex;align-items:center;gap:8px;font:700 15px/1 var(--f-display);letter-spacing:.08em}
@@ -292,7 +293,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .pick-head .btn.ready{background:var(--ok);color:#06281b;border-color:#9bf5cf}
 .pick-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:8px}
 .pick-grid .bcard{padding:6px;gap:2px;min-height:0;justify-content:center}
-.pick-grid .bcard .beast{height:100%;width:auto;max-width:100%;min-height:0;flex:1}
+.pick-grid .bcard{overflow:hidden}
+.pick-grid .bcard .beast{width:100%;height:auto;min-height:0;flex:0 1 auto;display:block}
 .pick-grid .bcard b{font-size:15px}
 .halfover{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(6,8,20,.86);text-align:center;padding:16px}
 .halfover .count{font:700 96px/1 var(--f-display);color:var(--gold);text-shadow:0 0 24px rgba(243,195,79,.6)}
@@ -772,7 +774,7 @@ const SHAPES = {
 function beastSVG(id, pal) {
   const p = pal || MONS[id].pal;
   const polys = SHAPES[id].map(([k, pts]) => `<polygon points="${pts}" fill="${p[k]}"/>`).join('');
-  return `<svg class="beast" viewBox="0 0 200 160" aria-hidden="true"><ellipse cx="100" cy="153" rx="72" ry="6" fill="rgba(0,0,0,.35)"/><g stroke="${p.k}" stroke-width="2.2" stroke-linejoin="round">${polys}</g></svg>`;
+  return `<svg class="beast" viewBox="0 0 200 160" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><ellipse cx="100" cy="153" rx="72" ry="6" fill="rgba(0,0,0,.35)"/><g stroke="${p.k}" stroke-width="2.2" stroke-linejoin="round">${polys}</g></svg>`;
 }
 
 /* Enemy palettes: corrupted versions of the beasts */
