@@ -117,14 +117,15 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 /* ---------- arena & fighters ---------- */
 #solo{display:grid;grid-template-rows:auto minmax(0,42%) auto minmax(0,1fr);gap:10px;padding:10px max(10px,env(safe-area-inset-right,0px)) 10px max(10px,env(safe-area-inset-left,0px))}
-#solo .hud{display:flex;align-items:center;gap:10px;grid-row:1}
+#solo{grid-template-columns:minmax(0,1fr)}
+#solo .hud{display:flex;align-items:center;gap:10px;grid-row:1;min-width:0}
 #solo .arena{grid-row:2}
 #solo .chargebar{grid-row:3}
 #solo .qpanel{grid-row:4}
-#solo .hud .st{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+#solo .hud .st{flex:1;min-width:0;display:flex;align-items:center;gap:10px;overflow:hidden}
 #solo .hud .st .flag{width:40px;height:auto;border-radius:3px}
 #solo .hud .st b{font:700 20px/1.1 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#solo .hud .st span{font-size:13px;color:var(--muted);white-space:nowrap}
+#solo .hud .st span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .arena{position:relative;overflow:hidden;border-radius:16px;border:1.5px solid var(--line);
   background:linear-gradient(180deg,var(--sky1,#20305e),var(--sky2,#0f1530))}
 .arena .bg{position:absolute;inset:0;width:100%;height:100%}
@@ -160,12 +161,13 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 /* ---------- question panel ---------- */
 .qpanel{position:relative;background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:14px 16px 16px;
-  display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden;transition:box-shadow .2s}
+  display:flex;flex-direction:column;gap:12px;min-height:0;overflow-x:hidden;overflow-y:auto;transition:box-shadow .2s}
+.qpanel.hasfb{overflow:hidden}
 .qpanel.ok{box-shadow:inset 0 0 0 3px var(--ok)}
 .q-head{display:flex;align-items:center;gap:8px;font:500 13px/1 var(--f-display);letter-spacing:.08em;color:var(--muted)}
 .q-head .tag{padding:4px 8px;border-radius:6px;background:var(--ink-2);color:var(--gold);letter-spacing:.04em;font-family:var(--f-ui);font-weight:700}
 .q-head .hint{font-family:var(--f-ui);letter-spacing:0;font-size:14px}
-.q-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:16px;justify-content:center}
+.q-body{flex:1 0 auto;display:flex;flex-direction:column;gap:16px;justify-content:center;justify-content:safe center}
 .q-body .tiles{margin-top:8px}
 .cue{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .card{display:inline-flex;align-items:center;gap:8px;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:6px 12px 6px 8px;font-size:16px}
@@ -322,6 +324,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel-2);border:1.5px solid var(--line);border-radius:10px;padding:10px 16px;font-size:15px;z-index:99}
 
 /* ---------- responsive ---------- */
+.sticky-cta{position:sticky;bottom:0;padding-block:12px 4px;background:linear-gradient(180deg,rgba(12,15,31,0),var(--ink) 40%);z-index:3}
 @media (orientation:landscape) and (min-width:900px){
   #solo{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
   #solo .hud{grid-column:1/-1}
@@ -334,6 +337,95 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   .help{grid-template-columns:1fr}
   .beast-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .menu .btn{font-size:18px}
+}
+/* phones */
+@media (max-width:600px){
+  #solo{grid-template-rows:auto clamp(150px,30vh,250px) auto minmax(0,1fr);grid-template-rows:auto clamp(150px,30dvh,250px) auto minmax(0,1fr);gap:8px;padding:8px max(8px,env(safe-area-inset-right,0px)) 8px max(8px,env(safe-area-inset-left,0px))}
+  #solo .hud{gap:8px}
+  #solo .hud .st{gap:8px}
+  #solo .hud .st .flag{width:30px}
+  #solo .hud .st b{font-size:17px}
+  #solo .hud .st span{font-size:12px}
+  #solo .iconbtn{width:38px;height:38px}
+  .arena{border-radius:12px}
+  .f-enemy{top:3%;height:62%;width:54%}
+  .f-player{bottom:3%;height:66%;width:54%}
+  .hpbox{padding:4px 8px;min-width:0;width:100%;max-width:190px;border-radius:8px}
+  .hpbox .nm b{font-size:13px}
+  .hpbox .nm span{font-size:11px}
+  .hp{height:7px;margin-top:3px}
+  .combo{margin-top:4px;font-size:11px;gap:4px}
+  .combo .pip{width:10px;height:10px}
+  .chargebar{font-size:12px}
+  .qpanel{padding:10px 12px 12px;gap:8px;border-radius:14px}
+  .q-head .tag{padding:3px 7px;font-size:12px}
+  .q-head .hint{font-size:13px}
+  .q-body{gap:10px}
+  .card{font-size:14px;padding:4px 10px 4px 6px;gap:6px}
+  .card .face{font-size:24px}
+  .card b.en{font-size:18px}
+  .card .flag{width:32px}
+  .card .ico{font-size:22px}
+  .bubble{font-size:19px;padding:8px 12px;border-radius:12px}
+  .opts{gap:7px}
+  .opt{font-size:16.5px;padding:10px 12px;border-radius:10px}
+  .sent{font-size:25px}
+  .tiles{gap:6px}
+  .tile{width:42px;height:48px;font-size:25px;border-radius:9px}
+  .fb{padding:14px;gap:10px}
+  .fb .big{font-size:20px}
+  .fb .ans-line{font-size:21px}
+  .fb .why{font-size:15px}
+  .dialog{padding:18px 14px;gap:12px}
+  .dialog h3{font-size:28px}
+  .dialog .bigstars .star{width:42px;height:42px}
+  .stats b{font-size:20px}
+  .review li{font-size:14px}
+  .review .en{font-size:15px}
+  .ultbanner{font-size:24px;padding:10px 18px}
+  .dmg{font-size:26px}
+  .dmg.crit{font-size:34px}
+  .logo h1{font-size:40px}
+  .topbar h2{font-size:21px}
+  .route{gap:10px}
+  .node{padding:10px 8px}
+  .node .cn{font-size:19px}
+  .node .flag{width:52px}
+  /* duel on a phone */
+  .half{padding:6px 8px 8px;gap:6px}
+  .frow{height:clamp(76px,11vh,120px);height:clamp(76px,11dvh,120px);gap:8px}
+  .frow .who{font-size:12px}
+  .frow .clock{font-size:15px}
+  .half .qpanel{padding:8px 10px;gap:6px}
+  .half .q-head .hint{font-size:12px}
+  .half .q-body{gap:6px}
+  .half .card{font-size:13px}
+  .half .card .face{font-size:20px}
+  .half .card b.en{font-size:16px}
+  .half .card .flag{width:28px}
+  .half .bubble{font-size:16px;padding:6px 10px}
+  .half .opts{gap:6px}
+  .half .opt{font-size:14.5px;padding:7px 8px}
+  .half .sent{font-size:21px}
+  .half .tiles{gap:5px}
+  .half .tile{width:36px;height:42px;font-size:22px}
+  .half .qtools .mini{padding:6px 10px;font-size:13px}
+  .halfover .count{font-size:72px}
+  .halfover h3{font-size:36px}
+  .halfover .btn{padding:10px 14px;font-size:16px}
+  .mid{padding:4px 10px}
+  .mid .iconbtn{width:36px;height:36px}
+  .setup-mid{padding:8px}
+  .chip{padding:8px 10px;font-size:14px}
+  .pick-head b{font-size:17px}
+  .pick-head .btn{padding:8px 14px;font-size:16px}
+  .pick-grid{gap:6px}
+  .pick-grid .bcard b{font-size:13px}
+}
+@media (max-width:600px) and (max-height:720px){
+  .half .q-head{display:none}
+  .frow{height:68px}
+  .half .opt{padding:6px 8px;font-size:14px}
 }
 @media (max-height:620px){
   .opt{padding:9px 12px}
@@ -362,7 +454,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
       <div class="lineup" id="lineup"></div>
       <div class="menu">
         <button class="btn primary" data-act="solo">單人闖關<small>環遊 8 國，打倒守關魔物</small></button>
-        <button class="btn" data-act="duel">雙人對戰<small>iPad 平放，面對面 PK</small></button>
+        <button class="btn" data-act="duel">雙人對戰<small>平板或手機平放，面對面 PK</small></button>
         <button class="btn wide ghost" data-act="help">使用說明</button>
       </div>
       <p class="scope-note">練習範圍：國家與休閒活動 15 個單字 · 句型 A–D · 所有格</p>
@@ -378,7 +470,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
       </div>
       <p style="margin:0;color:var(--muted)">六隻幻獸的能力完全一樣，只有外型和招式動畫不同。挑一隻你最喜歡的！</p>
       <div class="beast-grid" id="selGrid"></div>
-      <div class="row"><button class="btn primary" data-act="selDone" style="min-width:220px">出發！</button></div>
+      <div class="row sticky-cta"><button class="btn primary" data-act="selDone" style="min-width:220px">出發！</button></div>
     </div>
   </section>
 
@@ -1050,7 +1142,7 @@ class Panel {
   }
   show(item) {
     this.item = item; this.locked = false; this.fill = {};
-    this.el.classList.remove('ok');
+    this.el.classList.remove('ok', 'hasfb'); this.el.scrollTop = 0;
     this.render();
   }
   clear() { this.el.innerHTML = ''; this.locked = true; }
@@ -1129,6 +1221,7 @@ class Panel {
         html += `<div class="ans-line">${esc(it.options[it.answer])}</div><div class="why">${esc(it.explain)}</div>`;
       }
       html += `<div class="tap">點一下繼續</div>`;
+      this.el.scrollTop = 0; this.el.classList.add('hasfb');
       const fb = document.createElement('div'); fb.className = 'fb'; fb.innerHTML = html;
       this.el.append(fb);
       let done = false; const start = Date.now();
