@@ -1,0 +1,1574 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0c0f1f">
+<title>環球幻獸對決</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Chakra+Petch:wght@500;700&display=swap">
+<style>
+/* Layout: arena on top + answer console below (side by side in landscape); duels split face-to-face, top half rotated 180°. */
+:root{
+  --ink:#0c0f1f;
+  --ink-2:#121735;
+  --panel:#1a2045;
+  --panel-2:#232b5a;
+  --line:#343e78;
+  --text:#eef1ff;
+  --muted:#a6aed6;
+  --gold:#f3c34f;
+  --gold-2:#b98422;
+  --ok:#45e0a0;
+  --bad:#ff5d73;
+  --p1:#4fc3ff;
+  --p2:#ff8a4c;
+  --f-display:"Chakra Petch","PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-en:"Andika","Chakra Petch","Helvetica Neue",Arial,sans-serif;
+  --f-ui:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--text);font-family:var(--f-ui);overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.en{font-family:var(--f-en)}
+#app{position:fixed;inset:0;display:flex;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(243,195,79,.10), transparent 60%),
+    radial-gradient(900px 600px at 0% 110%, rgba(79,195,255,.10), transparent 60%),
+    var(--ink)}
+#stage{position:relative;flex:1;min-width:0}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.screen.scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.wrap{width:100%;max-width:1000px;margin:0 auto;padding-block:18px 32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+
+/* ---------- buttons ---------- */
+.btn{font:700 19px/1.2 var(--f-ui);padding:14px 22px;border-radius:12px;background:var(--panel-2);
+  border:2px solid var(--line);color:var(--text);box-shadow:0 4px 0 #0a0d22;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0a0d22}
+.btn.primary{background:linear-gradient(180deg,#ffd76e,var(--gold) 45%,var(--gold-2));color:#251703;border-color:#ffe39a}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.iconbtn{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--panel);
+  border:1.5px solid var(--line);padding:0;flex:0 0 auto}
+.iconbtn svg{width:22px;height:22px}
+.topbar{display:flex;align-items:center;gap:12px}
+.topbar h2{margin:0;font:700 24px/1.2 var(--f-display);letter-spacing:.02em;flex:1;text-wrap:balance}
+.eyebrow{font:500 13px/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+
+/* ---------- title ---------- */
+#title .wrap{min-height:100%;justify-content:center;align-items:center;text-align:center;gap:22px}
+.logo{display:flex;flex-direction:column;align-items:center;gap:6px}
+.logo h1{margin:0;font:700 clamp(40px,8vw,76px)/1.05 var(--f-display);letter-spacing:.04em;
+  background:linear-gradient(180deg,#fff6d6,var(--gold) 55%,#c07a14);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 0 #3a2506)}
+.logo .sub{font:500 clamp(14px,2.4vw,18px)/1.3 var(--f-display);letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.lineup{display:flex;justify-content:center;align-items:flex-end;gap:0;width:min(720px,100%)}
+.lineup .beast{width:33%;height:auto}
+.lineup .beast:nth-child(2){width:38%;transform:translateY(-6%)}
+.lineup .beast:first-child{transform:scaleX(-1)}
+.menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:min(560px,100%)}
+.menu .btn{padding:18px 16px;font-size:21px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.menu .btn small{font:500 13px/1.3 var(--f-ui);opacity:.8}
+.menu .btn.wide{grid-column:1/-1;flex-direction:row;justify-content:center;font-size:17px;padding:12px}
+.scope-note{font-size:13px;color:var(--muted)}
+.title-tools{position:absolute;top:12px;right:max(12px,env(safe-area-inset-right,0px));z-index:5}
+
+/* ---------- beast cards ---------- */
+.beast-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.bcard{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:10px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.bcard .beast{width:100%;height:auto}
+.bcard b{font:700 18px/1.2 var(--f-ui)}
+.bcard .en-name{font:500 13px/1 var(--f-display);letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.bcard .elem{font-size:12px;padding:3px 8px;border-radius:99px;background:var(--ink-2);color:var(--muted)}
+.bcard[aria-pressed="true"]{border-color:var(--gold);background:linear-gradient(180deg,#2b2a4a,var(--panel));box-shadow:0 0 0 3px rgba(243,195,79,.25)}
+
+/* ---------- map ---------- */
+.route{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;counter-reset:st}
+.node{position:relative;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.node .no{position:absolute;top:8px;left:10px;font:700 14px/1 var(--f-display);color:var(--muted)}
+.node .flag{width:62px;height:auto;border-radius:4px;box-shadow:0 0 0 1.5px rgba(255,255,255,.18)}
+.node .cn{font:700 22px/1.1 var(--f-en)}
+.node .zh{font-size:13px;color:var(--muted)}
+.node .stars{display:flex;gap:2px}
+.node .topic{font-size:12px;color:var(--muted);line-height:1.35;min-height:2.7em}
+.node.locked{opacity:.45}
+.node.locked .flag{filter:grayscale(1)}
+.node.boss{border-color:#7a2f45;background:linear-gradient(180deg,#2c1630,var(--panel))}
+.star{width:22px;height:22px}
+.star.on path{fill:var(--gold);stroke:#7a5410}
+.star.off path{fill:#2a3160;stroke:#3c4682}
+.endless{display:flex;align-items:center;gap:14px;background:linear-gradient(90deg,#2b1638,#1a2045);border:2px solid #5b3a78;border-radius:14px;padding:14px 16px}
+.endless .t{flex:1;min-width:0}
+.endless b{font:700 20px/1.2 var(--f-ui)}
+.endless p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.mychip{display:flex;align-items:center;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:4px 12px 4px 4px}
+.mychip .beast{width:64px;height:auto}
+.mychip span{font-size:15px}
+
+/* ---------- arena & fighters ---------- */
+#solo{display:grid;grid-template-rows:auto minmax(0,42%) auto minmax(0,1fr);gap:10px;padding:10px max(10px,env(safe-area-inset-right,0px)) 10px max(10px,env(safe-area-inset-left,0px))}
+#solo .hud{display:flex;align-items:center;gap:10px;grid-row:1}
+#solo .arena{grid-row:2}
+#solo .chargebar{grid-row:3}
+#solo .qpanel{grid-row:4}
+#solo .hud .st{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+#solo .hud .st .flag{width:40px;height:auto;border-radius:3px}
+#solo .hud .st b{font:700 20px/1.1 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#solo .hud .st span{font-size:13px;color:var(--muted);white-space:nowrap}
+.arena{position:relative;overflow:hidden;border-radius:16px;border:1.5px solid var(--line);
+  background:linear-gradient(180deg,var(--sky1,#20305e),var(--sky2,#0f1530))}
+.arena .bg{position:absolute;inset:0;width:100%;height:100%}
+.arena::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30%;background:linear-gradient(180deg,transparent,rgba(5,6,16,.55));pointer-events:none}
+.fighter{position:absolute;display:flex;flex-direction:column;gap:6px;z-index:2}
+.f-enemy{right:3%;top:4%;height:60%;width:50%;align-items:flex-end}
+.f-player{left:3%;bottom:4%;height:64%;width:50%;align-items:flex-start;flex-direction:column-reverse}
+.mon{flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:center;width:100%;position:relative}
+.bob{height:100%;display:flex;align-items:flex-end;justify-content:center;animation:bob 2.6s ease-in-out infinite}
+.f-enemy .bob{animation-delay:-1.3s}
+.bob .beast{height:100%;width:auto;max-width:100%}
+.flip{transform:scaleX(-1)}
+.boss-aura .beast{filter:drop-shadow(0 0 14px rgba(255,60,120,.65))}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4%)}}
+.hpbox{background:rgba(10,12,30,.82);border:1.5px solid rgba(255,255,255,.14);border-radius:10px;padding:6px 10px;min-width:min(240px,100%);max-width:100%;backdrop-filter:blur(4px)}
+.hpbox .nm{display:flex;align-items:baseline;gap:8px;justify-content:space-between}
+.hpbox .nm b{font:700 15px/1.2 var(--f-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hpbox .nm span{font:500 13px/1 var(--f-display);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hp{height:10px;border-radius:99px;background:#2a1020;overflow:hidden;margin-top:5px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.hp i{display:block;height:100%;width:100%;border-radius:inherit;background:linear-gradient(90deg,#3ee08f,#9cf05a);transition:width .45s ease}
+.hp.mid i{background:linear-gradient(90deg,#f0b43a,#ffd85a)}
+.hp.low i{background:linear-gradient(90deg,#ff4d6d,#ff8a5c)}
+.combo{display:flex;align-items:center;gap:5px;margin-top:6px;font:500 12px/1 var(--f-display);color:var(--muted);letter-spacing:.06em}
+.combo .pip{width:12px;height:12px;transform:rotate(45deg);border:1.5px solid var(--gold-2);background:transparent;border-radius:2px}
+.combo .pip.on{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.combo.ready{color:var(--gold)}
+.chargebar{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.chargebar .track{flex:1;height:8px;border-radius:99px;background:var(--ink-2);overflow:hidden;border:1px solid var(--line)}
+.chargebar .track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9a3c,#ff4d6d)}
+.chargebar.warn .track i{animation:pulse .4s infinite alternate}
+@keyframes pulse{to{filter:brightness(1.6)}}
+
+/* ---------- question panel ---------- */
+.qpanel{position:relative;background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:14px 16px 16px;
+  display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden;transition:box-shadow .2s}
+.qpanel.ok{box-shadow:inset 0 0 0 3px var(--ok)}
+.q-head{display:flex;align-items:center;gap:8px;font:500 13px/1 var(--f-display);letter-spacing:.08em;color:var(--muted)}
+.q-head .tag{padding:4px 8px;border-radius:6px;background:var(--ink-2);color:var(--gold);letter-spacing:.04em;font-family:var(--f-ui);font-weight:700}
+.q-head .hint{font-family:var(--f-ui);letter-spacing:0;font-size:14px}
+.q-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:16px;justify-content:center}
+.q-body .tiles{margin-top:8px}
+.cue{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.card{display:inline-flex;align-items:center;gap:8px;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:6px 12px 6px 8px;font-size:16px}
+.card .face{font-size:30px;line-height:1}
+.card .flag{width:42px;height:auto;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.2)}
+.card .ico{font-size:28px;line-height:1}
+.card b.en{font-size:21px}
+.card small{color:var(--muted);font-size:14px}
+.bubble{font:700 clamp(21px,2.7vw,28px)/1.3 var(--f-en);background:#f4f1ff;color:#151a3a;border-radius:14px;padding:10px 16px;align-self:flex-start;position:relative;max-width:100%}
+.bubble.ans{background:#dff7ff}
+.blank{display:inline-block;min-width:2.6em;border-bottom:3px solid #6a5cff;margin:0 .1em;transform:translateY(-.1em)}
+.sent{font:700 clamp(24px,3.3vw,34px)/1.6 var(--f-en)}
+.slots{display:inline-flex;gap:4px;align-items:flex-end;vertical-align:bottom}
+.ltr{display:inline-grid;place-items:center;min-width:1.05em;height:1.5em;padding:0 .08em}
+.ltr.slot{border-bottom:4px solid var(--gold);background:rgba(243,195,79,.08);border-radius:6px 6px 0 0;min-width:1.15em;cursor:pointer}
+.ltr.slot.filled{color:#fff2c8;background:rgba(243,195,79,.18)}
+.ltr.slot.next{animation:blink 1s infinite}
+@keyframes blink{50%{background:rgba(243,195,79,.28)}}
+.tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tile{width:clamp(44px,5.6vw,56px);height:clamp(48px,6vw,60px);border-radius:10px;border:none;background:linear-gradient(180deg,#3a4488,#2b3470);
+  box-shadow:0 4px 0 #161b45, inset 0 1px 0 rgba(255,255,255,.18);font:700 clamp(24px,3.2vw,32px)/1 var(--f-en);color:#fff;touch-action:none}
+.tile:active{transform:translateY(3px);box-shadow:0 1px 0 #161b45}
+.tile.used{visibility:hidden}
+.qtools{display:flex;justify-content:center}
+.mini{font:500 14px/1 var(--f-ui);padding:9px 14px;border-radius:9px;background:transparent;border:1.5px solid var(--line);color:var(--muted)}
+.opts{display:grid;grid-template-columns:1fr;gap:9px}
+.opts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.opt{text-align:left;font:700 clamp(18px,2.3vw,23px)/1.3 var(--f-en);padding:12px 16px;border-radius:12px;border:2px solid var(--line);
+  background:var(--panel-2);color:var(--text);box-shadow:0 3px 0 #0f1334;touch-action:none;min-width:0;overflow-wrap:anywhere}
+.opts.two .opt{text-align:center}
+.opt .k{display:inline-grid;place-items:center;width:1.5em;height:1.5em;margin-right:.5em;border-radius:6px;background:var(--ink-2);color:var(--muted);font-size:.8em}
+.opt.right{border-color:var(--ok);background:#173d3a}
+.opt.wrong{border-color:var(--bad);background:#43192a}
+.fb{position:absolute;inset:0;background:rgba(12,15,31,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px;text-align:center;z-index:5}
+.fb .big{font:700 24px/1.2 var(--f-ui);color:var(--bad)}
+.fb .big.case{color:#ffb547}
+.fb .ans-line{font:700 clamp(22px,3vw,30px)/1.35 var(--f-en);color:#d9fff0}
+.fb .ans-line u{text-decoration:none;border-bottom:3px solid var(--ok)}
+.fb .yours{font:500 17px/1.3 var(--f-en);color:var(--muted)}
+.fb .yours s{color:#ff9aab}
+.fb .why{font-size:16px;line-height:1.55;color:var(--text);max-width:34em}
+.fb .tap{font-size:13px;color:var(--muted)}
+.okbadge{position:absolute;right:14px;top:10px;font:700 18px/1 var(--f-ui);color:var(--ok);animation:pop .5s ease-out both;z-index:4}
+@keyframes pop{from{transform:scale(.4);opacity:0}60%{transform:scale(1.2);opacity:1}to{transform:scale(1)}}
+
+/* ---------- fx ---------- */
+.fx{position:absolute;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.proj{position:absolute;left:0;top:0;width:46px;height:46px;will-change:transform}
+.proj-fire{border-radius:50%;background:radial-gradient(circle,#fff8cf 0 18%,#ffc23a 34%,#ff5a00 58%,rgba(255,60,0,0) 70%);filter:drop-shadow(0 0 10px #ff6a00)}
+.proj-ice{width:64px;height:24px;clip-path:polygon(0 50%,30% 0,100% 50%,30% 100%);background:linear-gradient(180deg,#ffffff,#8ce0ff 60%,#3aa0e0);filter:drop-shadow(0 0 8px #8ce0ff)}
+.proj-volt{width:80px;height:30px;clip-path:polygon(0 40%,38% 10%,34% 42%,70% 20%,62% 50%,100% 50%,58% 78%,64% 56%,28% 86%,34% 58%,0 70%);background:#ffe14d;filter:drop-shadow(0 0 10px #fff27a)}
+.proj-night{border-radius:50%;background:radial-gradient(circle,#ffd6f2 0 12%,#ff3fa4 30%,#5a1a6e 55%,rgba(30,0,50,0) 70%);filter:drop-shadow(0 0 12px #ff3fa4)}
+.proj-terra{width:54px;height:40px;clip-path:polygon(0 60%,40% 0,100% 30%,85% 100%,20% 90%);background:linear-gradient(135deg,#d2c08f,#7a6a4f 60%,#4e4232);filter:drop-shadow(0 0 6px #7ed957)}
+.proj-tide{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 30% 50%,rgba(0,0,0,0) 44%,#c9fbff 46%,#3fc6e0 58%,rgba(31,143,168,0) 66%);filter:drop-shadow(0 0 8px #7fe9ff)}
+.burst{position:absolute;left:0;top:0;width:120px;height:120px;border-radius:50%;border:6px solid var(--c,#fff);transform:translate(-50%,-50%) scale(.2);opacity:.95}
+.dmg{position:absolute;left:0;top:0;font:700 34px/1 var(--f-display);color:#fff;text-shadow:0 3px 0 #000,0 0 12px var(--c,#ff5d73);transform:translate(-50%,-50%);white-space:nowrap}
+.dmg.crit{font-size:46px;color:#ffe27a}
+.ultbanner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:20;pointer-events:none;
+  font:700 clamp(26px,4.6vw,44px)/1 var(--f-display);color:#fff;letter-spacing:.06em;white-space:nowrap;
+  padding:12px 26px;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(20,10,40,.9) 20%,rgba(20,10,40,.9) 80%,rgba(0,0,0,0));
+  text-shadow:0 0 18px var(--c,#f3c34f),0 3px 0 #000}
+.ultbanner small{display:block;font:700 14px/1.6 var(--f-display);letter-spacing:.3em;color:var(--c,#f3c34f);text-align:center}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:30}
+
+/* ---------- overlays ---------- */
+.overlay{position:absolute;inset:0;z-index:80;background:rgba(6,8,20,.82);display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.dialog{background:var(--ink-2);border:2px solid var(--line);border-radius:18px;padding:22px;width:min(560px,100%);display:flex;flex-direction:column;gap:14px;text-align:center;max-height:100%;overflow-y:auto}
+.dialog h3{margin:0;font:700 34px/1.1 var(--f-display);letter-spacing:.04em}
+.dialog h3.win{color:var(--gold)}
+.dialog h3.lose{color:#ff8fa0}
+.dialog .bigstars{display:flex;justify-content:center;gap:8px}
+.dialog .bigstars .star{width:52px;height:52px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stats div{background:var(--panel);border-radius:10px;padding:10px 6px}
+.stats b{display:block;font:700 24px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.stats span{font-size:12px;color:var(--muted)}
+.review{text-align:left;background:var(--panel);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.review h4{margin:0;font-size:15px;color:var(--gold)}
+.review li{font-size:15px;line-height:1.45}
+.review ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.review .en{font-size:17px}
+.review .a{color:var(--ok)}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.newbest{font:700 15px/1 var(--f-ui);color:var(--ok)}
+
+/* ---------- duel ---------- */
+#duel,#duelSetup{display:grid;grid-template-rows:minmax(0,1fr) auto minmax(0,1fr);touch-action:none}
+.half{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px;min-height:0}
+.half.top{transform:rotate(180deg)}
+.half.p1{background:linear-gradient(0deg,rgba(79,195,255,.10),transparent 70%)}
+.half.p2{background:linear-gradient(0deg,rgba(255,138,76,.10),transparent 70%)}
+.frow{display:flex;align-items:stretch;gap:12px;height:clamp(96px,26%,200px);flex:0 0 auto}
+.frow .mon{flex:0 0 auto;width:auto;aspect-ratio:200/160;height:100%}
+.frow .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.frow .hpbox{min-width:0}
+.frow .who{display:flex;align-items:center;gap:8px;font:700 15px/1 var(--f-display);letter-spacing:.08em}
+.frow .who .dot{width:10px;height:10px;border-radius:50%}
+.p1 .who{color:var(--p1)} .p1 .who .dot{background:var(--p1)}
+.p2 .who{color:var(--p2)} .p2 .who .dot{background:var(--p2)}
+.frow .clock{margin-left:auto;font:700 18px/1 var(--f-display);color:var(--text);font-variant-numeric:tabular-nums}
+.half .qpanel{flex:1;padding:10px 12px;gap:8px}
+.half .opts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.half .opt{font-size:clamp(16px,2.2vw,20px);padding:9px 10px;text-align:center}
+.half .bubble{font-size:clamp(18px,2.6vw,24px);padding:8px 14px}
+.half .sent{font-size:clamp(22px,3.2vw,30px)}
+.half .card{padding:4px 10px 4px 6px}
+.half .card .face{font-size:24px}
+.half .q-body{gap:8px}
+.half .tile{width:clamp(40px,5.4vw,52px);height:clamp(44px,5.8vw,56px)}
+.mid{display:flex;align-items:center;justify-content:center;gap:12px;padding:6px 12px;background:var(--ink-2);border-block:1.5px solid var(--line);position:relative}
+.mid::before,.mid::after{content:"";position:absolute;left:0;right:0;height:3px}
+.mid::before{top:-2px;background:linear-gradient(90deg,transparent,var(--p2),transparent)}
+.mid::after{bottom:-2px;background:linear-gradient(90deg,transparent,var(--p1),transparent)}
+.mid .vs{font:700 22px/1 var(--f-display);color:var(--gold);letter-spacing:.1em}
+.mid .iconbtn{width:40px;height:40px}
+.setup-mid{flex-direction:column;gap:8px;padding:10px 12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.chips .lbl{font-size:13px;color:var(--muted)}
+.chip{font:700 15px/1 var(--f-ui);padding:9px 13px;border-radius:99px;border:1.5px solid var(--line);background:var(--panel);color:var(--text)}
+.chip[aria-pressed="true"]{background:var(--gold);color:#251703;border-color:#ffe39a}
+.pick-head{display:flex;align-items:center;gap:10px}
+.pick-head b{font:700 20px/1 var(--f-display);letter-spacing:.06em}
+.p1 .pick-head b{color:var(--p1)} .p2 .pick-head b{color:var(--p2)}
+.pick-head .btn{margin-left:auto;padding:10px 16px;font-size:17px}
+.pick-head .btn.ready{background:var(--ok);color:#06281b;border-color:#9bf5cf}
+.pick-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:8px}
+.pick-grid .bcard{padding:6px;gap:2px;min-height:0;justify-content:center}
+.pick-grid .bcard .beast{height:100%;width:auto;max-width:100%;min-height:0;flex:1}
+.pick-grid .bcard b{font-size:15px}
+.halfover{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(6,8,20,.86);text-align:center;padding:16px}
+.halfover .count{font:700 96px/1 var(--f-display);color:var(--gold);text-shadow:0 0 24px rgba(243,195,79,.6)}
+.halfover h3{margin:0;font:700 46px/1 var(--f-display);letter-spacing:.06em}
+.halfover h3.win{color:var(--gold)} .halfover h3.lose{color:#9fb0ff}
+.halfover p{margin:0;color:var(--muted);font-size:16px}
+.rotate-hint{position:absolute;inset:0;z-index:90;background:rgba(6,8,20,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
+.rotate-hint p{margin:0;font-size:18px;max-width:26em;line-height:1.6}
+@media (orientation:landscape){ .rotate-hint.armed{display:flex} }
+
+/* ---------- help ---------- */
+.help{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.help section{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.help section.full{grid-column:1/-1}
+.help h3{margin:0 0 8px;font:700 19px/1.3 var(--f-ui);color:var(--gold)}
+.help p,.help li{font-size:15.5px;line-height:1.7;color:var(--text)}
+.help p{margin:0 0 6px}
+.help ul{margin:0;padding-left:1.2em}
+.help table{border-collapse:collapse;width:100%;font-size:15px}
+.help td,.help th{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+.help th{color:var(--muted);font-weight:500}
+.help .en{font-size:16px}
+.tblwrap{overflow-x:auto}
+.teacher{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel-2);border:1.5px solid var(--line);border-radius:10px;padding:10px 16px;font-size:15px;z-index:99}
+
+/* ---------- responsive ---------- */
+@media (orientation:landscape) and (min-width:900px){
+  #solo{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
+  #solo .hud{grid-column:1/-1}
+  #solo .arena{grid-row:2/4;grid-column:1}
+  #solo .chargebar{grid-row:2;grid-column:2}
+  #solo .qpanel{grid-row:3;grid-column:2}
+}
+@media (max-width:640px){
+  .route{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .help{grid-template-columns:1fr}
+  .beast-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .menu .btn{font-size:18px}
+}
+@media (max-height:620px){
+  .opt{padding:9px 12px}
+  .qpanel{padding:10px 12px;gap:8px}
+}
+@media (prefers-reduced-motion:reduce){
+  .bob{animation:none}
+  .ltr.slot.next{animation:none}
+}
+</style>
+</head>
+<body>
+
+
+<div id="app"><div id="stage">
+
+  <!-- TITLE -->
+  <section class="screen scroll" id="title">
+    <div class="title-tools" data-slot="mute"></div>
+    <div class="wrap">
+      <div class="logo">
+        <span class="eyebrow">Book 7 · Topic 1 · Where Are You From?</span>
+        <h1>環球幻獸對決</h1>
+        <span class="sub">Beast Duel · World Tour</span>
+      </div>
+      <div class="lineup" id="lineup"></div>
+      <div class="menu">
+        <button class="btn primary" data-act="solo">單人闖關<small>環遊 8 國，打倒守關魔物</small></button>
+        <button class="btn" data-act="duel">雙人對戰<small>iPad 平放，面對面 PK</small></button>
+        <button class="btn wide ghost" data-act="help">使用說明</button>
+      </div>
+      <p class="scope-note">練習範圍：國家與休閒活動 15 個單字 · 句型 A–D · 所有格</p>
+    </div>
+  </section>
+
+  <!-- BEAST SELECT -->
+  <section class="screen scroll" id="select" hidden>
+    <div class="wrap">
+      <div class="topbar">
+        <button class="iconbtn" data-act="back" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h2>選擇你的幻獸</h2>
+      </div>
+      <p style="margin:0;color:var(--muted)">六隻幻獸的能力完全一樣，只有外型和招式動畫不同。挑一隻你最喜歡的！</p>
+      <div class="beast-grid" id="selGrid"></div>
+      <div class="row"><button class="btn primary" data-act="selDone" style="min-width:220px">出發！</button></div>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section class="screen scroll" id="map" hidden>
+    <div class="wrap">
+      <div class="topbar">
+        <button class="iconbtn" data-act="home" aria-label="回主選單"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h2>世界巡迴</h2>
+        <span data-slot="mute"></span>
+      </div>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <button class="mychip" data-act="changeBeast" id="myChip"></button>
+        <span style="color:var(--muted);font-size:14px" id="starTotal"></span>
+      </div>
+      <div class="route" id="route"></div>
+      <div class="endless" id="endlessCard"></div>
+    </div>
+  </section>
+
+  <!-- SOLO BATTLE -->
+  <section class="screen" id="solo" hidden>
+    <div class="hud">
+      <div class="st" id="soloTitle"></div>
+      <span data-slot="mute"></span>
+      <button class="iconbtn" data-act="pause" aria-label="暫停"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+    </div>
+    <div class="arena" id="arena">
+      <div class="fighter f-enemy" id="fE">
+        <div class="hpbox"><div class="nm"><b data-k="name"></b><span data-k="hpt"></span></div><div class="hp"><i></i></div></div>
+        <div class="mon"><div class="bob" data-k="art"></div></div>
+      </div>
+      <div class="fighter f-player" id="fP">
+        <div class="hpbox"><div class="nm"><b data-k="name"></b><span data-k="hpt"></span></div><div class="hp"><i></i></div>
+          <div class="combo" data-k="combo"></div></div>
+        <div class="mon"><div class="bob" data-k="art"></div></div>
+      </div>
+    </div>
+    <div class="chargebar" id="charge"><span id="chargeLbl">敵方蓄力</span><div class="track"><i></i></div></div>
+    <div class="qpanel" id="soloPanel"></div>
+    <div class="fx"></div>
+  </section>
+
+  <!-- DUEL SETUP -->
+  <section class="screen" id="duelSetup" hidden>
+    <div class="half top p2" id="pickP2"></div>
+    <div class="mid setup-mid">
+      <div class="chips" id="scopeChips"></div>
+      <div class="chips" id="tierChips"></div>
+      <div class="chips"><button class="mini" data-act="home">回主選單</button><span data-slot="mute"></span></div>
+    </div>
+    <div class="half p1" id="pickP1"></div>
+    <div class="rotate-hint armed" id="rotHint">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+      <p>雙人對戰請把 iPad <b>直放</b>、平放在桌上，兩人面對面坐。上方的玩家會看到倒過來的畫面，這是給他看的。</p>
+      <button class="btn" data-act="dismissRot">知道了，繼續</button>
+    </div>
+  </section>
+
+  <!-- DUEL -->
+  <section class="screen" id="duel" hidden>
+    <div class="half top p2" id="dP2"></div>
+    <div class="mid">
+      <span data-slot="mute"></span>
+      <span class="vs">VS</span>
+      <button class="iconbtn" data-act="duelQuit" aria-label="結束對戰"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="half p1" id="dP1"></div>
+    <div class="fx"></div>
+  </section>
+
+  <!-- HELP -->
+  <section class="screen scroll" id="help" hidden>
+    <div class="wrap">
+      <div class="topbar">
+        <button class="iconbtn" data-act="home" aria-label="回主選單"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h2>使用說明</h2>
+      </div>
+      <div class="help">
+        <section class="full">
+          <h3>怎麼玩</h3>
+          <p>畫面上方是戰場，下方是題目。<b>答對</b>，你的幻獸就會出招攻擊；<b>答錯</b>，換對手攻擊你，畫面會顯示正確答案和原因，看完點一下就能繼續。先把對手血量打到 0 就獲勝。</p>
+        </section>
+        <section>
+          <h3>兩種題目</h3>
+          <ul>
+            <li><b>拼字題</b>：點下方的字母磚，依序填進空格；點已填好的格子可以把字母拿回來。字母磚裡有大寫、小寫的陷阱，<b>大小寫錯了也算錯</b>。</li>
+            <li><b>選擇題</b>：看懂句子，選出正確的答案。</li>
+          </ul>
+        </section>
+        <section>
+          <h3>傷害與連擊</h3>
+          <div class="tblwrap"><table>
+            <tr><th>題型</th><th>傷害</th></tr>
+            <tr><td>選擇題</td><td>12</td></tr>
+            <tr><td>拼字（填空幾個字母）</td><td>16</td></tr>
+            <tr><td>拼字（拼出整個字）</td><td>22</td></tr>
+          </table></div>
+          <p style="margin-top:8px">連續答對 3 題會放出<b>必殺技</b>，傷害加倍。答錯一題，連擊就歸零。</p>
+        </section>
+        <section>
+          <h3>單人闖關</h3>
+          <ul>
+            <li>從 Taiwan 出發，依序挑戰 8 個國家，打贏一關才會開放下一關。</li>
+            <li>第 5 關開始有<b>敵方蓄力條</b>：太久沒作答，敵人會自己攻擊。</li>
+            <li>星等看剩下的血量：70% 以上 3 顆星、40% 以上 2 顆星，過關至少 1 顆星。</li>
+            <li>第 8 關 the USA 是魔王關。全部打完會開放<b>無盡挑戰</b>，看你能連續打倒幾隻魔物。</li>
+          </ul>
+        </section>
+        <section>
+          <h3>雙人對戰</h3>
+          <ul>
+            <li>iPad <b>直放</b>、平放在桌上，兩人面對面坐，各自操作靠近自己的那一半畫面。</li>
+            <li>兩人各有自己的題目，同時作答，答得又快又準的人先贏。</li>
+            <li>開戰前可選範圍（全範圍／單字拼寫／句型＋所有格）和拼字難度。</li>
+            <li>限時 3 分鐘，時間到時剩餘血量多的人獲勝。</li>
+          </ul>
+        </section>
+        <section class="full">
+          <h3>練習範圍</h3>
+          <div class="tblwrap"><table>
+            <tr><th>單字（拼字）</th><td class="en">the USA · the UK · France · Vietnam · Korea · Japan · Taiwan · Australia<br>play basketball · play video games · ride a bike · visit my friend · go camping · watch TV · go shopping</td></tr>
+            <tr><th>句型 A</th><td class="en">Where are you from? — I'm from Taiwan.</td></tr>
+            <tr><th>句型 B</th><td class="en">Is he from the USA? — Yes, he is. / No, she isn't. She's from the UK.</td></tr>
+            <tr><th>句型 C</th><td class="en">What do you like to do in your free time? — I like to ride a bike.</td></tr>
+            <tr><th>句型 D</th><td class="en">What does he/she like to do in his/her free time? — He/She likes to go camping.</td></tr>
+            <tr><th>所有格</th><td><span class="en">my · your · his · her · our</span>、<span class="en">Wendy's mom</span> 這類「名字 + 's」</td></tr>
+          </table></div>
+          <p style="margin-top:8px;color:var(--muted)">句型 D 的主詞是 he/she 時，visit my friend 改用 <span class="en">visit friends</span>，避免 my 和 his/her 混在一起。</p>
+        </section>
+        <section class="full">
+          <h3>給老師</h3>
+          <p>這個遊戲不需要登入，也不會回傳任何作答資料。闖關進度、星星和最高紀錄只存在這台裝置的瀏覽器裡，換裝置或清除瀏覽資料就會消失。</p>
+          <div class="teacher">
+            <button class="btn" data-act="unlockAll">示範用：解鎖全部關卡</button>
+            <button class="btn ghost" data-act="askReset">清除這台裝置的紀錄</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+</div></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =========================================================
+   Utilities
+   ========================================================= */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* =========================================================
+   Storage (per-device convenience only)
+   ========================================================= */
+const Store = {
+  key: 'beast-duel-b7t1-v1',
+  d: { stars: [0,0,0,0,0,0,0,0], best: [0,0,0,0,0,0,0,0], endless: 0, mute: false, mon: 'blaze' },
+  load() { try { const raw = localStorage.getItem(this.key); if (raw) Object.assign(this.d, JSON.parse(raw)); } catch (e) {} },
+  save() { try { localStorage.setItem(this.key, JSON.stringify(this.d)); } catch (e) {} },
+  reset() { this.d = { stars: [0,0,0,0,0,0,0,0], best: [0,0,0,0,0,0,0,0], endless: 0, mute: this.d.mute, mon: this.d.mon }; this.save(); }
+};
+Store.load();
+
+/* =========================================================
+   Sound (WebAudio synth, no files)
+   ========================================================= */
+const SFX = {
+  ctx: null,
+  get on() { return !Store.d.mute; },
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ctx = null; }
+  },
+  tone(f, d, type = 'sine', v = .15, f2 = null, delay = 0) {
+    const c = this.ctx; if (!c || !this.on) return;
+    const t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .01); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + d + .05);
+  },
+  noise(d, v = .2, f1 = 3000, f2 = 300, delay = 0) {
+    const c = this.ctx; if (!c || !this.on) return;
+    const t = c.currentTime + delay, len = Math.floor(c.sampleRate * d), buf = c.createBuffer(1, len, c.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+    const s = c.createBufferSource(); s.buffer = buf;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2; bp.frequency.setValueAtTime(f1, t); bp.frequency.exponentialRampToValueAtTime(f2, t + d);
+    const g = c.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(bp).connect(g).connect(c.destination); s.start(t); s.stop(t + d + .05);
+  },
+  play(n) {
+    if (!this.ctx || !this.on) return;
+    switch (n) {
+      case 'tap': this.tone(1300, .04, 'square', .04); break;
+      case 'ok': this.tone(660, .09, 'triangle', .16); this.tone(990, .14, 'triangle', .16, null, .08); break;
+      case 'no': this.tone(240, .28, 'sawtooth', .09, 140); break;
+      case 'atk': this.noise(.28, .22, 4000, 400); this.tone(180, .18, 'sine', .2, 70, .05); break;
+      case 'ult': this.noise(.6, .3, 6000, 200); this.tone(110, .5, 'sawtooth', .12, 55); this.tone(523, .12, 'square', .06); this.tone(784, .2, 'square', .06, null, .1); break;
+      case 'hit': this.tone(120, .16, 'sine', .3, 50); break;
+      case 'win': [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .22, 'triangle', .16, null, i * .12)); break;
+      case 'lose': [392, 330, 262].forEach((f, i) => this.tone(f, .3, 'triangle', .14, null, i * .18)); break;
+      case 'tick': this.tone(880, .05, 'square', .05); break;
+      case 'go': this.tone(440, .12, 'square', .08); this.tone(880, .25, 'square', .08, null, .12); break;
+    }
+  }
+};
+['pointerdown', 'touchend', 'click'].forEach(ev => document.addEventListener(ev, () => SFX.init(), { capture: true, passive: true }));
+
+/* =========================================================
+   Course data
+   ========================================================= */
+const COUNTRIES = [
+  { key: 'Taiwan', zh: '臺灣' },
+  { key: 'Japan', zh: '日本' },
+  { key: 'Korea', zh: '韓國' },
+  { key: 'Vietnam', zh: '越南' },
+  { key: 'Australia', zh: '澳洲' },
+  { key: 'France', zh: '法國' },
+  { key: 'UK', zh: '英國', the: true },
+  { key: 'USA', zh: '美國', the: true },
+];
+const C = k => COUNTRIES.find(c => c.key === k);
+const cp = c => (c.the ? 'the ' : '') + c.key;
+
+const ACTS = [
+  { full: 'play basketball', zh: '打籃球', icon: '🏀', keys: [1] },
+  { full: 'play video games', zh: '玩電玩', icon: '🎮', keys: [1, 2] },
+  { full: 'ride a bike', zh: '騎腳踏車', icon: '🚲', keys: [0, 2, 2] },
+  { full: 'visit my friend', zh: '拜訪朋友', icon: '🏡', keys: [0, 2, 2], third: 'visit friends' },
+  { full: 'go camping', zh: '去露營', icon: '⛺', keys: [1] },
+  { full: 'watch TV', zh: '看電視', icon: '📺', keys: [1, 1, 0] },
+  { full: 'go shopping', zh: '去購物', icon: '🛍️', keys: [1] },
+];
+const a3 = a => a.third || a.full;
+
+const BOYS = ['Ken', 'Kevin', 'Tim', 'Mark', 'Andy', 'Peter'];
+const GIRLS = ['Wendy', 'Emma', 'Linda', 'Jenny', 'Lily', 'Doris'];
+function person() {
+  const m = Math.random() < .5;
+  return {
+    name: pick(m ? BOYS : GIRLS), m,
+    sub: m ? 'he' : 'she', pos: m ? 'his' : 'her',
+    osub: m ? 'she' : 'he', opos: m ? 'her' : 'his',
+    face: m ? '👦' : '👧', gzh: m ? '男生' : '女生',
+    c: pick(COUNTRIES)
+  };
+}
+
+/* =========================================================
+   Flags (drawn, so they look the same on every device)
+   ========================================================= */
+function starPts(cx, cy, R, r, n = 5, rot = -90) {
+  const p = [];
+  for (let i = 0; i < n * 2; i++) {
+    const rad = (rot + i * 180 / n) * Math.PI / 180, rr = i % 2 ? r : R;
+    p.push((cx + rr * Math.cos(rad)).toFixed(2) + ',' + (cy + rr * Math.sin(rad)).toFixed(2));
+  }
+  return p.join(' ');
+}
+const UNION = `<rect width="30" height="20" fill="#012169"/><path d="M0,0L30,20M30,0L0,20" stroke="#fff" stroke-width="4"/><path d="M0,0L30,20M30,0L0,20" stroke="#C8102E" stroke-width="1.4"/><path d="M15,0V20M0,10H30" stroke="#fff" stroke-width="6"/><path d="M15,0V20M0,10H30" stroke="#C8102E" stroke-width="3.4"/>`;
+function flagSVG(key) {
+  let b = '';
+  switch (key) {
+    case 'Taiwan': b = `<rect width="30" height="20" fill="#FE0000"/><rect width="15" height="10" fill="#000095"/><polygon points="${starPts(7.5, 5, 3.7, 2.3, 12)}" fill="#fff"/><circle cx="7.5" cy="5" r="2.15" fill="#000095"/><circle cx="7.5" cy="5" r="1.8" fill="#fff"/>`; break;
+    case 'Japan': b = `<rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#BC002D"/>`; break;
+    case 'Korea': {
+      const tri = (x, y, a) => `<g transform="translate(${x} ${y}) rotate(${a})" fill="#000"><rect x="-2" y="-1.6" width="4" height=".7"/><rect x="-2" y="-.35" width="4" height=".7"/><rect x="-2" y=".9" width="4" height=".7"/></g>`;
+      b = `<rect width="30" height="20" fill="#fff"/><g transform="rotate(33.7 15 10)"><circle cx="15" cy="10" r="5" fill="#0047A0"/><path d="M10,10A5,5 0 0 1 20,10A2.5,2.5 0 0 1 15,10A2.5,2.5 0 0 0 10,10Z" fill="#CD2E3A"/></g>${tri(7, 4.5, -56)}${tri(23, 15.5, -56)}${tri(23, 4.5, 56)}${tri(7, 15.5, 56)}`; break;
+    }
+    case 'Vietnam': b = `<rect width="30" height="20" fill="#DA251D"/><polygon points="${starPts(15, 10.4, 5.6, 2.2)}" fill="#FFCD00"/>`; break;
+    case 'Australia': b = `<rect width="30" height="20" fill="#012169"/><svg width="15" height="10" viewBox="0 0 30 20">${UNION}</svg><polygon points="${starPts(7.5, 15, 2.6, 1.15, 7)}" fill="#fff"/><polygon points="${starPts(22.5, 16.6, 1.3, .55, 7)}" fill="#fff"/><polygon points="${starPts(22.5, 4.2, 1.3, .55, 7)}" fill="#fff"/><polygon points="${starPts(18.6, 8.6, 1.3, .55, 7)}" fill="#fff"/><polygon points="${starPts(26.2, 7.6, 1.3, .55, 7)}" fill="#fff"/><polygon points="${starPts(24.2, 11.2, .7, .3, 5)}" fill="#fff"/>`; break;
+    case 'France': b = `<rect width="10" height="20" fill="#0055A4"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#EF4135"/>`; break;
+    case 'UK': b = UNION; break;
+    case 'USA': {
+      let s = ''; for (let i = 0; i < 13; i++) s += `<rect y="${(i * 20 / 13).toFixed(3)}" width="30" height="${(20 / 13 + .02).toFixed(3)}" fill="${i % 2 ? '#fff' : '#B22234'}"/>`;
+      let d = ''; for (let r = 0; r < 4; r++) for (let c2 = 0; c2 < 5; c2++) d += `<circle cx="${1.3 + c2 * 2.35 + (r % 2) * 1.1}" cy="${1.4 + r * 2.6}" r=".55" fill="#fff"/>`;
+      b = s + `<rect width="12" height="10.77" fill="#3C3B6E"/>` + d; break;
+    }
+  }
+  return `<svg class="flag" viewBox="0 0 30 20" aria-hidden="true">${b}</svg>`;
+}
+
+/* =========================================================
+   Beasts (original low-poly designs, facing right)
+   ========================================================= */
+const MONS = {
+  blaze: { zh: '焰鬃獅', en: 'Blazemane', elem: '火', move: '烈焰彈', ult: '獅王炎爆', proj: 'fire', color: '#ff8a2a',
+    pal: { a: '#d9480f', b: '#8f2600', c: '#ffc23a', d: '#ff7a1a', e: '#fff3b0', k: '#2a0d05' } },
+  frost: { zh: '霜牙狼', en: 'Frostfang', elem: '冰', move: '冰晶刺', ult: '極寒狼嚎', proj: 'ice', color: '#8ce0ff',
+    pal: { a: '#5fb7e6', b: '#2b6a98', c: '#e6f9ff', d: '#a9e5ff', e: '#ffffff', k: '#0a1e2e' } },
+  volt: { zh: '雷翼鷲', en: 'Voltwing', elem: '雷', move: '雷羽擊', ult: '萬雷天降', proj: 'volt', color: '#ffe14d',
+    pal: { a: '#7b5cff', b: '#4630b8', c: '#ffe14d', d: '#b8a6ff', e: '#ffffff', k: '#140b33' } },
+  night: { zh: '夜淵龍', en: 'Nightwyrm', elem: '暗', move: '暗影彈', ult: '深淵龍息', proj: 'night', color: '#ff3fa4',
+    pal: { a: '#36456a', b: '#1c2440', c: '#ff3fa4', d: '#5a6f9a', e: '#ff8ad8', k: '#07090f' } },
+  terra: { zh: '岩甲犀', en: 'Terrahorn', elem: '岩', move: '岩角衝', ult: '山崩裂地', proj: 'terra', color: '#7ed957',
+    pal: { a: '#857356', b: '#4e4232', c: '#7ed957', d: '#b2a283', e: '#e2ff8f', k: '#1b160e' } },
+  tide: { zh: '潮刃鯊', en: 'Tidejaw', elem: '水', move: '潮刃斬', ult: '怒濤漩渦', proj: 'tide', color: '#3fc6e0',
+    pal: { a: '#1f8fa8', b: '#0f5265', c: '#eafcff', d: '#5ad4e8', e: '#ffef5a', k: '#04161c' } },
+};
+const MON_IDS = Object.keys(MONS);
+
+const SHAPES = {
+  blaze: [
+    ['b', '48,108 60,108 62,148 50,148'], ['b', '120,108 132,108 136,148 124,148'],
+    ['a', '38,92 22,80 12,60 18,58 28,74 44,86'],
+    ['c', '12,60 4,44 14,50 12,32 22,48 27,38 25,58 18,58'],
+    ['a', '36,84 70,76 118,76 140,96 132,116 60,118 40,110'],
+    ['b', '60,118 132,116 126,107 66,110'], ['d', '70,76 118,76 104,88 78,88'],
+    ['a', '40,104 62,104 66,118 58,150 44,150 48,122'], ['a', '116,104 136,100 140,120 144,150 130,150 126,124'],
+    ['d', '112,92 104,64 112,40 126,52 134,26 146,44 162,22 168,46 186,40 178,62 194,74 176,82 184,102 162,96 148,112 136,98 122,108'],
+    ['c', '124,90 118,62 130,66 136,42 146,60 160,40 162,62 176,58 170,76 182,88 164,88 150,100 138,90'],
+    ['a', '146,56 172,52 192,66 194,76 184,84 160,86 146,76'],
+    ['b', '172,72 194,76 184,84 166,84'], ['e', '164,61 178,62 167,66'], ['e', '180,80 183,89 186,80']
+  ],
+  frost: [
+    ['b', '52,108 62,108 60,148 50,148'], ['b', '122,104 132,104 136,148 126,148'],
+    ['a', '42,90 22,72 10,44 26,58 30,42 36,62 50,84'],
+    ['a', '40,86 72,76 122,74 136,92 128,112 62,114 44,106'],
+    ['b', '62,114 128,112 120,104 70,106'],
+    ['c', '64,80 70,56 79,78'], ['c', '80,77 90,48 98,76'], ['c', '99,75 108,52 114,75'],
+    ['a', '44,102 64,102 66,118 60,150 48,150 50,120'], ['a', '118,100 136,96 140,118 146,150 134,150 128,122'],
+    ['a', '118,76 134,58 146,62 140,94 126,96'],
+    ['d', '128,96 142,94 140,106 132,112'],
+    ['a', '134,58 140,28 150,46 156,26 162,48 186,58 198,66 192,72 168,76 148,78'],
+    ['b', '140,34 144,46 148,44'], ['b', '156,32 158,46 161,46'],
+    ['b', '176,66 198,66 192,72 172,74'], ['e', '156,55 170,57 159,61'], ['c', '184,72 186,81 189,72']
+  ],
+  volt: [
+    ['b', '96,84 76,26 60,8 74,40 50,30 64,58 44,60 70,82'],
+    ['c', '62,104 26,94 40,104 16,112 44,112 30,126 64,114'],
+    ['b', '92,118 98,118 96,146 86,150 92,142'], ['b', '116,118 122,118 124,146 114,150 120,142'],
+    ['a', '60,96 84,80 124,78 140,96 128,118 80,122'],
+    ['d', '84,112 128,110 124,118 86,120'],
+    ['a', '100,88 94,36 106,4 118,30 132,10 128,44 150,32 136,66 156,62 128,90'],
+    ['d', '104,42 118,30 128,44 122,58 108,62'],
+    ['a', '124,80 136,58 152,52 168,58 160,76 140,90'],
+    ['c', '136,58 128,36 144,52 146,30 155,52'],
+    ['c', '160,56 184,60 190,72 178,66 162,70'],
+    ['e', '148,59 160,60 151,64']
+  ],
+  night: [
+    ['b', '84,86 70,22 104,4 100,30 124,20 112,48 130,46 104,86'],
+    ['a', '52,100 28,108 10,126 2,140 18,128 34,118 56,116'], ['c', '2,140 0,126 11,130'],
+    ['b', '66,110 76,110 74,146 64,146'], ['b', '112,108 122,108 124,146 114,146'],
+    ['a', '48,94 80,84 122,86 136,104 124,122 68,124'],
+    ['d', '70,118 124,116 118,108 76,110'],
+    ['c', '70,88 76,70 84,86'], ['c', '88,85 96,66 102,85'],
+    ['a', '54,112 74,112 76,124 70,150 58,150 62,124'], ['a', '116,106 132,102 134,124 140,150 128,150 124,126'],
+    ['a', '96,88 92,30 126,6 120,34 150,22 132,54 152,52 118,90'],
+    ['d', '98,82 96,38 120,34 132,54 116,78'],
+    ['a', '120,90 132,62 148,48 158,58 144,72 136,98'],
+    ['a', '146,44 170,42 196,54 194,62 172,66 152,64'],
+    ['c', '150,46 136,20 157,40'], ['c', '160,42 156,14 168,40'],
+    ['b', '172,62 194,62 186,69 170,68'], ['e', '166,49 180,51 169,55']
+  ],
+  terra: [
+    ['b', '52,112 68,112 68,148 52,148'], ['b', '116,112 132,112 134,148 118,148'],
+    ['a', '26,92 12,100 14,112 22,104 30,100'],
+    ['a', '26,90 44,66 110,60 140,74 150,102 138,124 40,126 24,110'],
+    ['b', '40,126 138,124 132,114 46,116'],
+    ['d', '46,70 62,50 84,66'], ['d', '82,64 100,44 120,64'], ['d', '112,63 128,52 138,72'],
+    ['c', '61,51 66,36 72,58'], ['c', '99,45 104,28 110,52'],
+    ['a', '34,112 58,112 60,150 36,150'], ['a', '118,110 142,108 146,150 122,150'],
+    ['a', '134,72 166,76 188,96 190,112 168,118 146,112'],
+    ['d', '140,74 160,72 166,86 146,90'],
+    ['c', '176,92 198,50 188,98'], ['d', '164,84 172,64 175,88'],
+    ['b', '142,72 140,56 151,70'], ['e', '154,89 166,90 157,94']
+  ],
+  tide: [
+    ['d', '0,150 20,134 44,141 70,126 100,139 130,123 160,139 186,127 200,140 200,158 0,158'],
+    ['c', '20,134 30,130 44,141'], ['c', '130,123 142,120 160,139'],
+    ['b', '34,92 8,60 18,92 6,126'],
+    ['a', '30,94 70,72 130,66 174,76 196,92 172,104 120,114 66,112'],
+    ['d', '66,112 120,114 172,104 160,100 118,105 70,104'],
+    ['a', '92,72 104,24 122,68'], ['b', '104,24 110,50 122,68'],
+    ['c', '128,68 140,50 142,70'], ['c', '148,70 160,56 160,74'],
+    ['b', '114,108 100,140 136,110'],
+    ['b', '140,80 143,80 140,96 137,96'], ['b', '148,80 151,80 148,94 145,94'],
+    ['k', '166,96 194,92 172,104'], ['c', '172,96 175,102 178,95'], ['c', '182,94 185,100 188,93'],
+    ['e', '166,81 178,81 169,86']
+  ],
+};
+function beastSVG(id, pal) {
+  const p = pal || MONS[id].pal;
+  const polys = SHAPES[id].map(([k, pts]) => `<polygon points="${pts}" fill="${p[k]}"/>`).join('');
+  return `<svg class="beast" viewBox="0 0 200 160" aria-hidden="true"><ellipse cx="100" cy="153" rx="72" ry="6" fill="rgba(0,0,0,.35)"/><g stroke="${p.k}" stroke-width="2.2" stroke-linejoin="round">${polys}</g></svg>`;
+}
+
+/* Enemy palettes: corrupted versions of the beasts */
+const EPAL = {
+  jade:   { a: '#4f7f5a', b: '#2b4a33', c: '#b8ff5a', d: '#7fae7f', e: '#ff5a5a', k: '#0b170e' },
+  rose:   { a: '#c45a8a', b: '#7a2752', c: '#ffd1e8', d: '#e58db5', e: '#fff36a', k: '#24081a' },
+  storm:  { a: '#2f5f8f', b: '#173456', c: '#7cf3ff', d: '#5f8fbf', e: '#ffef5a', k: '#06121f' },
+  bog:    { a: '#3f7f6a', b: '#1f4a3c', c: '#d6ff9a', d: '#6fbfa0', e: '#ff6a3a', k: '#04140f' },
+  ember:  { a: '#a8321e', b: '#5a160c', c: '#ffdb6a', d: '#d8582a', e: '#ffffff', k: '#1a0503' },
+  violet: { a: '#5a3a8a', b: '#2f1a55', c: '#7af0ff', d: '#8a6abf', e: '#7af0ff', k: '#0e0620' },
+  fog:    { a: '#7a8496', b: '#454d5e', c: '#d4ecff', d: '#a8b2c4', e: '#ff4d6d', k: '#10131a' },
+  doom:   { a: '#3a1420', b: '#1e070f', c: '#ff3b3b', d: '#6a2433', e: '#ffd23b', k: '#050102' },
+};
+
+/* =========================================================
+   Stage backgrounds (landmark silhouettes)
+   ========================================================= */
+function bgSVG(key) {
+  const f = 'rgba(8,10,30,.55)', f2 = 'rgba(8,10,30,.32)';
+  let s = '';
+  switch (key) {
+    case 'Taiwan': {
+      s += `<path d="M0,160 L0,120 L40,96 L80,112 L130,84 L190,110 L240,92 L400,118 L400,160Z" fill="${f2}"/>`;
+      for (let i = 0; i < 8; i++) { const y = 30 + i * 11.5; s += `<polygon points="283,${y} 317,${y} 311,${y + 11.5} 289,${y + 11.5}" fill="${f}"/>`; }
+      s += `<rect x="298" y="6" width="4" height="26" fill="${f}"/><polygon points="288,122 312,122 318,160 282,160" fill="${f}"/>`;
+      s += `<rect x="200" y="128" width="26" height="32" fill="${f}"/><rect x="232" y="118" width="20" height="42" fill="${f}"/><rect x="336" y="124" width="30" height="36" fill="${f}"/><rect x="372" y="132" width="22" height="28" fill="${f}"/>`;
+      break;
+    }
+    case 'Japan':
+      s += `<polygon points="110,160 222,62 248,60 370,160" fill="${f}"/><polygon points="206,76 222,62 248,60 264,74 254,80 244,72 234,82 224,74" fill="rgba(255,255,255,.55)"/>`;
+      s += `<rect x="48" y="96" width="7" height="64" fill="${f}"/><rect x="95" y="96" width="7" height="64" fill="${f}"/><path d="M34,86 Q75,78 116,86 L114,93 Q75,86 36,93Z" fill="${f}"/><rect x="42" y="102" width="66" height="5" fill="${f}"/>`;
+      break;
+    case 'Korea':
+      s += `<path d="M0,160 L0,104 Q60,70 120,100 Q180,66 250,96 Q320,64 400,98 L400,160Z" fill="${f2}"/>`;
+      s += `<rect x="226" y="118" width="140" height="42" fill="${f}"/><path d="M204,120 Q296,100 388,120 L370,108 Q296,92 222,108Z" fill="${f}"/><path d="M234,104 Q296,88 358,104 L346,94 Q296,80 246,94Z" fill="${f}"/><rect x="250" y="94" width="92" height="12" fill="${f}"/><rect x="284" y="132" width="24" height="28" fill="rgba(0,0,0,.4)"/>`;
+      break;
+    case 'Vietnam':
+      s += `<path d="M0,160 L0,130 Q10,60 30,128 Q44,40 66,124 Q86,70 100,130 L130,130 Q150,30 172,126 Q190,84 206,132 L250,132 Q268,50 290,128 Q312,64 330,130 Q352,40 376,126 Q388,90 400,128 L400,160Z" fill="${f}"/>`;
+      s += `<rect x="0" y="138" width="400" height="22" fill="rgba(80,200,220,.18)"/><path d="M150,140 L196,140 L188,148 L158,148Z" fill="${f}"/><path d="M172,140 L172,118 L186,138Z" fill="${f2}"/>`;
+      break;
+    case 'Australia':
+      s += `<path d="M20,136 Q90,70 160,136" fill="none" stroke="${f}" stroke-width="7"/><rect x="0" y="132" width="180" height="6" fill="${f}"/>`;
+      s += `<rect x="190" y="140" width="190" height="20" fill="${f}"/><path d="M206,140 Q218,96 262,84 Q244,112 248,140Z" fill="${f}"/><path d="M244,140 Q258,92 306,80 Q286,112 290,140Z" fill="${f}"/><path d="M286,140 Q300,104 340,98 Q326,120 330,140Z" fill="${f}"/><path d="M328,140 Q338,116 366,112 Q356,128 360,140Z" fill="${f}"/>`;
+      break;
+    case 'France':
+      s += `<path d="M300,6 L304,6 L306,40 L316,88 L334,160 L318,160 Q302,116 286,160 L270,160 L288,88 L298,40Z" fill="${f}"/><rect x="290" y="84" width="24" height="5" fill="${f}"/><rect x="295" y="48" width="14" height="4" fill="${f}"/>`;
+      s += `<rect x="40" y="124" width="60" height="36" fill="${f2}"/><rect x="110" y="132" width="50" height="28" fill="${f2}"/><rect x="350" y="128" width="44" height="32" fill="${f2}"/>`;
+      break;
+    case 'UK':
+      s += `<rect x="290" y="44" width="24" height="116" fill="${f}"/><polygon points="286,46 302,8 318,46" fill="${f}"/><circle cx="302" cy="62" r="8.5" fill="rgba(255,240,190,.55)"/>`;
+      s += `<rect x="150" y="104" width="140" height="56" fill="${f}"/>`; for (let i = 0; i < 7; i++) s += `<polygon points="${154 + i * 20},104 ${160 + i * 20},90 ${166 + i * 20},104" fill="${f}"/>`;
+      s += `<path d="M0,150 Q50,128 100,150 L100,160 L0,160Z" fill="${f2}"/>`;
+      break;
+    case 'USA':
+      s += `<rect x="0" y="140" width="400" height="20" fill="rgba(80,160,220,.16)"/><rect x="0" y="118" width="400" height="7" fill="${f}"/>`;
+      s += `<rect x="144" y="30" width="12" height="130" fill="${f}"/><rect x="294" y="30" width="12" height="130" fill="${f}"/><rect x="140" y="56" width="20" height="5" fill="${f}"/><rect x="290" y="56" width="20" height="5" fill="${f}"/>`;
+      s += `<path d="M0,86 Q75,122 150,32 Q225,124 300,32 Q350,100 400,96" fill="none" stroke="${f}" stroke-width="3"/>`;
+      for (let x = 10; x < 400; x += 14) { const y = x < 150 ? 86 + (x / 150) * 30 * Math.sin(x / 150 * Math.PI) : x < 300 ? 32 + 90 * Math.sin((x - 150) / 150 * Math.PI) : 32 + 68 * Math.sin((x - 300) / 200 * Math.PI); if (y < 118) s += `<rect x="${x}" y="${y.toFixed(1)}" width="1" height="${(118 - y).toFixed(1)}" fill="${f2}"/>`; }
+      break;
+  }
+  return `<svg class="bg" viewBox="0 0 400 160" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${s}</svg>`;
+}
+
+/* =========================================================
+   Stages
+   ========================================================= */
+const STAGES = [
+  { c: 'Taiwan',    sky: ['#2a6f8f', '#10243a'], enemy: 'terra', pal: 'jade',   name: '玉山岩甲犀', pool: { country: 3, A: 3 }, tier: 1, hp: 100, timer: 0,  topic: '國家拼字・句型 A' },
+  { c: 'Japan',     sky: ['#8f4a7a', '#22132e'], enemy: 'frost', pal: 'rose',   name: '櫻吹霜牙狼', pool: { country: 3, B: 3 }, tier: 1, hp: 100, timer: 0,  topic: '國家拼字・句型 B' },
+  { c: 'Korea',     sky: ['#3f5fa8', '#121a3a'], enemy: 'volt',  pal: 'storm',  name: '漢江雷翼鷲', pool: { act: 3, C: 3 },     tier: 1, hp: 100, timer: 0,  topic: '活動拼字・句型 C' },
+  { c: 'Vietnam',   sky: ['#2f8f7f', '#0d2a2a'], enemy: 'tide',  pal: 'bog',    name: '下龍潮刃鯊', pool: { act: 3, D: 3 },     tier: 1, hp: 100, timer: 0,  topic: '活動拼字・句型 D' },
+  { c: 'Australia', sky: ['#c46a2a', '#3a160c'], enemy: 'blaze', pal: 'ember',  name: '赤沙焰鬃獅', pool: { P: 1 },            tier: 1, hp: 110, timer: 20, topic: '所有格專門關' },
+  { c: 'France',    sky: ['#4a4f9f', '#141638'], enemy: 'night', pal: 'violet', name: '塞納夜淵龍', pool: 'all',               tier: 2, hp: 120, timer: 18, topic: '全範圍・拼整個字' },
+  { c: 'UK',        sky: ['#5a6878', '#161b24'], enemy: 'frost', pal: 'fog',    name: '霧都霜牙狼', pool: 'all',               tier: 2, hp: 120, timer: 16, topic: '全範圍・拼整個字' },
+  { c: 'USA',       sky: ['#7a1f2f', '#14060c'], enemy: 'night', pal: 'doom',   name: '終焉魔龍',   pool: 'all',               tier: 2, hp: 200, timer: 15, topic: '魔王關・全範圍', boss: true },
+];
+const POOL_ALL = { country: 2, act: 2, A: 1, B: 1, C: 1, D: 1, P: 2 };
+const POOL_WORDS = { country: 1, act: 1 };
+const POOL_SENT = { A: 1, B: 1, C: 1, D: 1, P: 2 };
+
+/* =========================================================
+   Question generators
+   ========================================================= */
+const TAGS = { country: '拼字・國家', act: '拼字・活動', A: '句型 A', B: '句型 B', C: '句型 C', D: '句型 D', P: '所有格' };
+
+function choice(o) {
+  // o: {tag, hint, cue, q, opts:[correct, ...distractors], explain, review, two}
+  const order = shuffle(o.opts.map((t, i) => ({ t, i })));
+  return { type: 'choice', tag: o.tag, hint: o.hint || '選出正確的答案', cue: o.cue || '', q: o.q, two: !!o.two,
+    options: order.map(x => x.t), answer: order.findIndex(x => x.i === 0), explain: o.explain,
+    review: o.review, sig: o.sig || o.q + '|' + o.opts[0] };
+}
+const card = (p, opt = {}) => `<span class="card"><span class="face">${p.face}</span><b class="en">${p.name}</b>${opt.country ? flagSVG(p.c.key) + `<small>${p.c.zh}</small>` : ''}${opt.act ? `<span class="ico">${opt.act.icon}</span><small>${opt.act.zh}</small>` : ''}</span>`;
+const bubble = (t, ans) => `<div class="bubble${ans ? ' ans' : ''}">${t}</div>`;
+const BL = '<span class="blank"></span>';
+const otherC = c => pick(COUNTRIES.filter(x => x !== c));
+const otherA = a => pick(ACTS.filter(x => x !== a));
+
+const GEN = {
+  country(tier) {
+    const c = pick(COUNTRIES);
+    return spell({ kind: 'country', word: c.key, before: `I'm from ${c.the ? 'the ' : ''}`, after: '.', tier,
+      cue: `<span class="card">${flagSVG(c.key)}<b>${c.zh}</b></span>` });
+  },
+  act(tier) {
+    const a = pick(ACTS), w = a.full.split(' '), ki = pick(a.keys);
+    return spell({ kind: 'act', word: w[ki], before: 'I like to ' + w.slice(0, ki).join(' ') + (ki ? ' ' : ''),
+      after: (ki < w.length - 1 ? ' ' + w.slice(ki + 1).join(' ') : '') + '.', tier,
+      cue: `<span class="card"><span class="ico">${a.icon}</span><b>${a.zh}</b></span>` });
+  },
+  A() {
+    const p = person(), c = p.c;
+    const theNote = c.the ? `UK、USA 前面要加 the。` : `${c.key} 前面不加 the。`;
+    if (Math.random() < .65) {
+      return choice({ tag: TAGS.A, hint: `幫 ${p.name} 選出正確的回答`, cue: card(p, { country: true }), q: bubble('Where are you from?'),
+        opts: [`I'm from ${cp(c)}.`, `I'm from ${cp(otherC(c))}.`, c.the ? `I'm from ${c.key}.` : `I'm from the ${c.key}.`, `I like to ${pick(ACTS).full}.`],
+        explain: `問 Where are you from? 要回答 I'm from ＋國家。${theNote}`,
+        review: { q: `${p.name}（${c.zh}）：Where are you from?`, a: `I'm from ${cp(c)}.` } });
+    }
+    return choice({ tag: TAGS.A, hint: '這句回答，配的是哪一個問題？', cue: card(p, { country: true }), q: bubble(`I'm from ${cp(c)}.`, true),
+      opts: ['Where are you from?', 'What do you like to do in your free time?', `Is ${p.osub} from ${cp(c)}?`, 'Where is you from?'],
+      explain: `I'm from… 是在說「我來自哪裡」，對應的問句是 Where are you from?（you 要配 are）`,
+      review: { q: `問句 → I'm from ${cp(c)}.`, a: 'Where are you from?' } });
+  },
+  B() {
+    const p = person(), S = cap(p.sub), OS = cap(p.osub);
+    if (Math.random() < .72) {
+      const truth = Math.random() < .5, asked = truth ? p.c : otherC(p.c);
+      const q = `Is ${p.sub} from ${cp(asked)}?`;
+      if (truth) return choice({ tag: TAGS.B, hint: '看卡片，選出正確的回答', cue: card(p, { country: true }), q: bubble(q),
+        opts: [`Yes, ${p.sub} is.`, `No, ${p.sub} isn't.`, `Yes, ${p.osub} is.`, `Yes, ${p.sub} isn't.`],
+        explain: `${p.name} 真的來自${p.c.zh}，所以回答 Yes, ${p.sub} is.（${p.name} 是${p.gzh}，用 ${p.sub}）`,
+        review: { q: `${p.name}（${p.c.zh}）：${q}`, a: `Yes, ${p.sub} is.` } });
+      return choice({ tag: TAGS.B, hint: '看卡片，選出正確的回答', cue: card(p, { country: true }), q: bubble(q),
+        opts: [`No, ${p.sub} isn't. ${S}'s from ${cp(p.c)}.`, `Yes, ${p.sub} is.`, `No, ${p.osub} isn't. ${OS}'s from ${cp(p.c)}.`, `No, ${p.sub} isn't. ${S}'s from ${cp(asked)}.`],
+        explain: `${p.name} 來自${p.c.zh}，不是${asked.zh}，所以先說 No, ${p.sub} isn't. 再補上 ${S}'s from ${cp(p.c)}.`,
+        review: { q: `${p.name}（${p.c.zh}）：${q}`, a: `No, ${p.sub} isn't. ${S}'s from ${cp(p.c)}.` } });
+    }
+    return choice({ tag: TAGS.B, hint: '空格要填哪一個字？', cue: card(p, { country: true }), q: bubble(`Is ${BL} from ${cp(p.c)}?`), two: true,
+      opts: [p.sub, p.osub, p.pos, p.opos],
+      explain: `${p.name} 是${p.gzh}，主詞用 ${p.sub}。his、her 是所有格，不能當主詞。`,
+      review: { q: `${p.name}：Is ___ from ${cp(p.c)}?`, a: p.sub } });
+  },
+  C() {
+    const a = pick(ACTS), o = otherA(a);
+    if (Math.random() < .6) return choice({ tag: TAGS.C, hint: '選出符合圖片的回答', cue: `<span class="card"><span class="face">🙋</span><b class="en">I</b><span class="ico">${a.icon}</span><small>${a.zh}</small></span>`,
+      q: bubble('What do you like to do in your free time?'),
+      opts: [`I like to ${a.full}.`, `I likes to ${a.full}.`, `I like to ${o.full}.`, `He likes to ${a3(a)}.`],
+      explain: `問 What do you like to do…? 要回答 I like to ＋活動。主詞是 I，like 不加 s。`,
+      review: { q: `What do you like to do in your free time?（${a.zh}）`, a: `I like to ${a.full}.` } });
+    return choice({ tag: TAGS.C, hint: '這句回答，配的是哪一個問題？', cue: `<span class="card"><span class="ico">${a.icon}</span><small>${a.zh}</small></span>`, q: bubble(`I like to ${a.full}.`, true),
+      opts: ['What do you like to do in your free time?', 'What does she like to do in her free time?', 'Where are you from?', 'What do you likes to do in your free time?'],
+      explain: `回答用 I like to…，問句就是 What do you like to do in your free time?（do 後面的 like 不加 s）`,
+      review: { q: `問句 → I like to ${a.full}.`, a: 'What do you like to do in your free time?' } });
+  },
+  D() {
+    const p = person(), a = pick(ACTS), o = otherA(a), S = cap(p.sub), OS = cap(p.osub), r = Math.random();
+    if (r < .5) return choice({ tag: TAGS.D, hint: '看卡片，選出正確的回答', cue: card(p, { act: a }),
+      q: bubble(`What does ${p.sub} like to do in ${p.pos} free time?`),
+      opts: [`${S} likes to ${a3(a)}.`, `${S} like to ${a3(a)}.`, `${OS} likes to ${a3(a)}.`, `${S} likes to ${a3(o)}.`],
+      explain: `主詞是 ${S}（${p.gzh}，第三人稱單數），like 要加 s，變成 likes。`,
+      review: { q: `${p.name}（${a.zh}）：What does ${p.sub} like to do in ${p.pos} free time?`, a: `${S} likes to ${a3(a)}.` } });
+    if (r < .78) return choice({ tag: TAGS.D, hint: '兩個空格要填什麼？', cue: card(p, {}), q: bubble(`What ${BL} ${p.sub} like to do in ${BL} free time?`), two: true,
+      opts: [`does … ${p.pos}`, `do … ${p.pos}`, `does … ${p.opos}`, `is … ${p.pos}`],
+      explain: `問 he/she 要用 does；${p.sub} 的所有格是 ${p.pos}。`,
+      review: { q: `What ___ ${p.sub} like to do in ___ free time?`, a: `does … ${p.pos}` } });
+    return choice({ tag: TAGS.D, hint: '空格要填哪一個字？', cue: card(p, { act: a }), q: bubble(`${p.name} ${BL} to ${a3(a)}.`), two: true,
+      opts: ['likes', 'like', 'does', 'are'],
+      explain: `${p.name} 是一個人（第三人稱單數），要用 likes。`,
+      review: { q: `${p.name} ___ to ${a3(a)}.`, a: 'likes' } });
+  },
+  P() {
+    const r = Math.random();
+    if (r < .2) {
+      const pairs = [['I', 'my'], ['you', 'your'], ['he', 'his'], ['she', 'her'], ['I', 'my'], ['you', 'your'], ['he', 'his'], ['she', 'her'], ['we', 'our']];
+      const [s, p] = pick(pairs), others = shuffle(['my', 'your', 'his', 'her', 'our'].filter(x => x !== p)).slice(0, 3);
+      return choice({ tag: TAGS.P, hint: '這個主詞的所有格是？', q: bubble(`${s} → ${BL}`), two: true, opts: [p, ...others],
+        explain: `${s} 的所有格是 ${p}，後面要接名詞，例如 ${p} friend。`, review: { q: `${s} 的所有格`, a: p }, sig: 'pair' + s });
+    }
+    if (r < .42) {
+      const p = person();
+      return choice({ tag: TAGS.P, hint: '空格要填哪一個字？', cue: card(p, {}), q: bubble(`What does ${p.name} like to do in ${BL} free time?`), two: true,
+        opts: [p.pos, p.opos, p.sub, p.osub],
+        explain: `${p.name} 是${p.gzh}，「${p.m ? '他' : '她'}的」要用 ${p.pos}。he/she 是主詞，不能放在名詞前面。`,
+        review: { q: `What does ${p.name} like to do in ___ free time?`, a: p.pos } });
+    }
+    if (r < .7) {
+      const p = person(), c = otherC(C('Taiwan')), a = pick(ACTS.filter(x => !x.full.includes('my')));
+      const T = [
+        { q: `I like to visit ${BL} friend.`, a: 'my', d: ['your', 'his', 'I'], why: '說「我的朋友」用 my friend。', hint: '（我的朋友）' },
+        { q: `Is ${BL} friend from ${cp(c)}?`, a: 'your', d: ['you', 'my', 'her'], why: '問對方「你的朋友」用 your friend。', hint: '（問對方：你的朋友）' },
+        { q: `What do you like to do in ${BL} free time?`, a: 'your', d: ['you', 'my', 'his'], why: '問對方「你的空閒時間」用 your free time。' },
+        { q: `I like to ${a.full} with ${BL} family.`, a: 'my', d: ['your', 'I', 'our'], why: '主詞是 I，「我的家人」用 my family。' },
+        { q: `We are from Taiwan. We like to ${a.full} with ${BL} friends.`, a: 'our', d: ['we', 'my', 'your'], why: '主詞是 We，「我們的朋友」用 our friends。' },
+        { q: `This is ${p.name}. ${BL} mom is from ${cp(p.c)}.`, a: cap(p.pos), d: [cap(p.sub), cap(p.opos), cap(p.osub)], why: `${p.name} 是${p.gzh}，「${p.m ? '他' : '她'}的媽媽」用 ${cap(p.pos)} mom，放句首要大寫。`, card: true },
+        { q: `This is ${p.name}. ${BL} mom is from ${cp(p.c)}.`, a: cap(p.pos), d: [cap(p.sub), cap(p.opos), cap(p.osub)], why: `${p.name} 是${p.gzh}，「${p.m ? '他' : '她'}的媽媽」用 ${cap(p.pos)} mom，放句首要大寫。`, card: true },
+      ];
+      const t = pick(T);
+      return choice({ tag: TAGS.P, hint: '空格要填哪一個字？' + (t.hint || ''), cue: t.card ? card(p, {}) : '', q: bubble(t.q), two: true,
+        opts: [t.a, ...t.d], explain: t.why, review: { q: t.q.replace(/<span class="blank"><\/span>/g, '___'), a: t.a } });
+    }
+    const n = pick([...BOYS, ...GIRLS].filter(x => x !== 'Kevin')), a = pick(ACTS);
+    if (Math.random() < .55) return choice({ tag: TAGS.P, hint: `「${n} 的媽媽」怎麼說？`, cue: `<span class="card"><b class="en">${n}</b><span class="face">👩</span><small>媽媽</small></span>`,
+      q: bubble(`This is ${BL} mom.`), two: true, opts: [`${n}'s`, n, `${n}s`, `${n} is`],
+      explain: `表示「${n} 的」要在名字後面加 's：${n}'s mom。`, review: { q: `This is ___ mom.（${n} 的媽媽）`, a: `${n}'s` } });
+    return choice({ tag: TAGS.P, hint: '哪一句完全正確？', cue: `<span class="card"><b class="en">${n}</b><span class="face">👩</span><span class="ico">${a.icon}</span><small>${a.zh}</small></span>`,
+      q: '', opts: [`${n}'s mom likes to ${a3(a)}.`, `${n} mom likes to ${a3(a)}.`, `${n}'s mom like to ${a3(a)}.`, `${n}s' mom likes to ${a3(a)}.`],
+      explain: `「${n} 的媽媽」是 ${n}'s mom；媽媽是一個人（第三人稱單數），所以用 likes。`,
+      review: { q: `${n} 的媽媽喜歡${a.zh}`, a: `${n}'s mom likes to ${a3(a)}.` }, sig: 'mom' + n + a.full });
+  },
+};
+
+function spell({ kind, word, before, after, tier, cue }) {
+  const n = word.length, idx = [...Array(n).keys()];
+  let blanks;
+  if (tier === 2) blanks = idx;
+  else {
+    const k = n <= 2 ? 1 : n <= 5 ? 2 : 3;
+    const must = (kind === 'country' || word === 'TV') ? [0] : [];
+    blanks = [...must, ...shuffle(idx.filter(i => !must.includes(i))).slice(0, k - must.length)].sort((x, y) => x - y);
+  }
+  const need = blanks.map(i => word[i]);
+  const swap = ch => ch === ch.toUpperCase() ? ch.toLowerCase() : ch.toUpperCase();
+  let extra = [];
+  if (tier === 2) {
+    extra.push(swap(word[0]));
+    const mid = word.slice(1).split('').filter(ch => /[a-z]/i.test(ch));
+    if (mid.length) extra.push(swap(pick(mid)));
+  } else {
+    [...new Set(need)].forEach(ch => extra.push(swap(ch)));
+  }
+  const allCaps = word === word.toUpperCase();
+  const lowerSet = new Set(word.toLowerCase());
+  const alpha = 'abcdefghiklmnoprstuvwy'.split('').filter(ch => !lowerSet.has(ch));
+  shuffle(alpha).slice(0, 2).forEach(ch => extra.push(allCaps ? ch.toUpperCase() : ch));
+  extra = [...new Set(extra)];
+  const tiles = shuffle([...need, ...extra]).map((ch, i) => ({ ch, id: i, used: false }));
+  let why;
+  if (kind === 'country') why = (word === 'UK' || word === 'USA') ? `${word} 每個字母都要大寫，前面還要加 the。` : `國家名稱第一個字母要大寫：${word}。`;
+  else if (word === 'TV') why = 'TV 兩個字母都要大寫。';
+  else why = `${word} 全部都是小寫字母。`;
+  return { type: 'spell', kind, tag: kind === 'country' ? TAGS.country : TAGS.act, tier, word, before, after, cue,
+    blanks, tiles, why, hint: tier === 2 ? '拼出整個字（注意大小寫）' : '填入缺少的字母（注意大小寫）',
+    sig: kind + word + tier, review: { q: `${before}___${after}`, a: word } };
+}
+
+function makePicker(pool, tierFn) {
+  const weights = pool === 'all' ? POOL_ALL : pool;
+  const keys = Object.keys(weights), bag = [];
+  keys.forEach(k => { for (let i = 0; i < weights[k]; i++) bag.push(k); });
+  const recent = [];
+  let lastKey = null;
+  return () => {
+    for (let tries = 0; tries < 20; tries++) {
+      let k = pick(bag);
+      if (keys.length > 1 && k === lastKey && Math.random() < .55) k = pick(bag);
+      const it = GEN[k](tierFn());
+      if (recent.includes(it.sig) && tries < 19) continue;
+      recent.push(it.sig); if (recent.length > 6) recent.shift();
+      lastKey = k;
+      return it;
+    }
+  };
+}
+
+/* =========================================================
+   Question panel (shared by solo and duel)
+   ========================================================= */
+class Panel {
+  constructor(el, onAnswer) {
+    this.el = el; this.onAnswer = onAnswer; this.locked = true; this.item = null;
+    el.addEventListener('pointerdown', e => this.down(e));
+  }
+  show(item) {
+    this.item = item; this.locked = false; this.fill = {};
+    this.el.classList.remove('ok');
+    this.render();
+  }
+  clear() { this.el.innerHTML = ''; this.locked = true; }
+  render() {
+    const it = this.item;
+    const head = `<div class="q-head"><span class="tag">${it.tag}</span><span class="hint">${it.hint}</span></div>`;
+    if (it.type === 'spell') {
+      const firstEmpty = it.blanks.find(i => this.fill[i] == null);
+      const slots = it.word.split('').map((ch, i) => {
+        if (!it.blanks.includes(i)) return `<span class="ltr">${esc(ch)}</span>`;
+        const f = this.fill[i];
+        return `<span class="ltr slot${f != null ? ' filled' : ''}${i === firstEmpty ? ' next' : ''}" data-s="${i}">${f != null ? esc(it.tiles[f].ch) : ''}</span>`;
+      }).join('');
+      const tiles = it.tiles.map(t => `<button class="tile${t.used ? ' used' : ''}" data-t="${t.id}" aria-label="${esc(t.ch)}">${esc(t.ch)}</button>`).join('');
+      this.el.innerHTML = head + `<div class="q-body"><div class="cue">${it.cue}</div>
+        <div class="sent en">${esc(it.before)}<span class="slots">${slots}</span>${esc(it.after)}</div>
+        <div class="tiles">${tiles}</div><div class="qtools"><button class="mini" data-clear="1">全部清除</button></div></div>`;
+    } else {
+      const opts = it.options.map((t, i) => `<button class="opt" data-o="${i}">${esc(t)}</button>`).join('');
+      this.el.innerHTML = head + `<div class="q-body">${it.cue ? `<div class="cue">${it.cue}</div>` : ''}${it.q}
+        <div class="opts${it.two ? ' two' : ''}">${opts}</div></div>`;
+    }
+  }
+  down(e) {
+    const fbEl = e.target.closest('.fb');
+    if (fbEl && this.skip) { e.preventDefault(); this.skip(); return; }
+    if (this.locked || !this.item) return;
+    const t = e.target.closest('[data-t],[data-s],[data-o],[data-clear]');
+    if (!t) return;
+    e.preventDefault();
+    const it = this.item;
+    if (t.dataset.o != null) {
+      this.locked = true;
+      const i = +t.dataset.o, ok = i === it.answer;
+      t.classList.add(ok ? 'right' : 'wrong');
+      if (!ok) this.el.querySelector(`[data-o="${it.answer}"]`).classList.add('right');
+      this.onAnswer({ correct: ok, item: it, picked: it.options[i] });
+      return;
+    }
+    if (t.dataset.clear) { it.tiles.forEach(x => x.used = false); this.fill = {}; SFX.play('tap'); this.render(); return; }
+    if (t.dataset.s != null) {
+      const s = +t.dataset.s, f = this.fill[s];
+      if (f != null) { it.tiles[f].used = false; delete this.fill[s]; SFX.play('tap'); this.render(); }
+      return;
+    }
+    if (t.dataset.t != null) {
+      const tile = it.tiles[+t.dataset.t]; if (tile.used) return;
+      const slot = it.blanks.find(i => this.fill[i] == null); if (slot == null) return;
+      tile.used = true; this.fill[slot] = tile.id; SFX.play('tap'); this.render();
+      if (it.blanks.every(i => this.fill[i] != null)) {
+        this.locked = true;
+        const built = it.word.split('').map((ch, i) => it.blanks.includes(i) ? it.tiles[this.fill[i]].ch : ch).join('');
+        const ok = built === it.word, caseOnly = !ok && built.toLowerCase() === it.word.toLowerCase();
+        setTimeout(() => this.onAnswer({ correct: ok, caseOnly, item: it, picked: built }), 140);
+      }
+    }
+  }
+  feedback(res, opts = {}) {
+    return new Promise(resolve => {
+      if (res.correct) {
+        this.el.classList.add('ok');
+        const b = document.createElement('div'); b.className = 'okbadge'; b.textContent = res.ult ? '必殺！' : '答對！';
+        this.el.append(b);
+        setTimeout(resolve, opts.okDelay || 700);
+        return;
+      }
+      const it = res.item;
+      let html = '';
+      if (res.timeout) html += `<div class="big">時間到！</div>`;
+      if (it.type === 'spell') {
+        if (!res.timeout) html += res.caseOnly ? `<div class="big case">字拼對了，但大小寫錯了</div>` : `<div class="big">拼錯了</div>`;
+        if (res.picked && !res.timeout) html += `<div class="yours">你拼的：<s>${esc(res.picked)}</s></div>`;
+        html += `<div class="ans-line">${esc(it.before)}<u>${esc(it.word)}</u>${esc(it.after)}</div><div class="why">${esc(it.why)}</div>`;
+      } else {
+        if (!res.timeout) html += `<div class="big">答錯了</div>`;
+        html += `<div class="ans-line">${esc(it.options[it.answer])}</div><div class="why">${esc(it.explain)}</div>`;
+      }
+      html += `<div class="tap">點一下繼續</div>`;
+      const fb = document.createElement('div'); fb.className = 'fb'; fb.innerHTML = html;
+      this.el.append(fb);
+      let done = false; const start = Date.now();
+      const fin = () => { if (done) return; if (Date.now() - start < 700) return; done = true; this.skip = null; resolve(); };
+      this.skip = fin;
+      setTimeout(() => { if (!done) { done = true; this.skip = null; resolve(); } }, opts.wrongDelay || 4500);
+    });
+  }
+}
+
+/* =========================================================
+   Fighter + effects
+   ========================================================= */
+class Fighter {
+  constructor(root, { id, pal, name, max, flip, lunge }) {
+    this.root = root; this.id = id; this.max = max; this.hp = max; this.flip = flip; this.lunge = lunge || [16, -8];
+    this.mon = $('.mon', root);
+    $('[data-k="art"]', root).innerHTML = beastSVG(id, pal);
+    if (flip) $('.beast', root).classList.add('flip');
+    $('[data-k="name"]', root).textContent = name;
+    this.hpBar = $('.hp', root); this.hpFill = $('.hp i', root); this.hpText = $('[data-k="hpt"]', root);
+    this.comboEl = $('[data-k="combo"]', root);
+    this.mon.getAnimations().forEach(a => a.cancel());
+    this.mon.style.opacity = 1; this.mon.style.transform = '';
+    this.setHP(max, true); this.setCombo(0);
+  }
+  setHP(v, instant) {
+    this.hp = Math.max(0, Math.round(v));
+    const pct = this.hp / this.max * 100;
+    if (instant) { this.hpFill.style.transition = 'none'; requestAnimationFrame(() => this.hpFill.style.transition = ''); }
+    this.hpFill.style.width = pct + '%';
+    this.hpBar.classList.toggle('mid', pct <= 50 && pct > 25); this.hpBar.classList.toggle('low', pct <= 25);
+    if (this.hpText) this.hpText.textContent = `${this.hp} / ${this.max}`;
+  }
+  setCombo(n) {
+    if (!this.comboEl) return;
+    const k = n % 3, ready = k === 2;
+    this.comboEl.classList.toggle('ready', ready);
+    this.comboEl.innerHTML = `<span>連擊</span>` + [0, 1, 2].map(i => `<i class="pip${i < k ? ' on' : ''}"></i>`).join('') + (ready ? `<span>下一題必殺！</span>` : '');
+  }
+}
+
+async function attackFX(fx, from, to, dmg, ult, bannerHost) {
+  const m = MONS[from.id], dur = reduceMotion ? 120 : (ult ? 560 : 400);
+  SFX.play(ult ? 'ult' : 'atk');
+  if (ult && bannerHost) {
+    const bn = document.createElement('div'); bn.className = 'ultbanner'; bn.style.setProperty('--c', m.color);
+    bn.innerHTML = `<small>必殺技</small>${m.ult}`; bannerHost.append(bn);
+    bn.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(1.4)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .2 }, { opacity: 1, offset: .8 }, { opacity: 0 }], { duration: 1100 }).finished.then(() => bn.remove());
+    await wait(reduceMotion ? 100 : 420);
+  }
+  const [lx, ly] = from.lunge;
+  from.mon.animate([{ transform: 'none' }, { transform: `translate(${lx}px,${ly}px)` }, { transform: 'none' }], { duration: 300, easing: 'ease-out' });
+  const L = fx.getBoundingClientRect(), a = from.mon.getBoundingClientRect(), b = to.mon.getBoundingClientRect();
+  const x1 = a.left + a.width * .55 - L.left, y1 = a.top + a.height * .5 - L.top, x2 = b.left + b.width / 2 - L.left, y2 = b.top + b.height * .55 - L.top;
+  const ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI, sc = ult ? 2 : 1.1;
+  const shots = ult ? 3 : 1;
+  const flights = [];
+  for (let s = 0; s < shots; s++) {
+    const p = document.createElement('div'); p.className = `proj proj-${m.proj}`; fx.append(p);
+    const off = (s - (shots - 1) / 2) * 26;
+    const nx = -Math.sin(ang * Math.PI / 180) * off, ny = Math.cos(ang * Math.PI / 180) * off;
+    flights.push(p.animate([
+      { transform: `translate(${x1 + nx}px,${y1 + ny}px) translate(-50%,-50%) rotate(${ang}deg) scale(.5)` },
+      { transform: `translate(${x2}px,${y2}px) translate(-50%,-50%) rotate(${ang}deg) scale(${sc})` }
+    ], { duration: dur, delay: s * 70, easing: 'cubic-bezier(.45,0,.9,.6)', fill: 'forwards' }).finished.then(() => p.remove()));
+  }
+  await Promise.all(flights);
+  SFX.play('hit');
+  const burst = document.createElement('div'); burst.className = 'burst'; burst.style.setProperty('--c', m.color);
+  burst.style.left = x2 + 'px'; burst.style.top = y2 + 'px'; fx.append(burst);
+  burst.animate([{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 1 }, { transform: `translate(-50%,-50%) scale(${ult ? 2.2 : 1.3})`, opacity: 0 }], { duration: 420, easing: 'ease-out' }).finished.then(() => burst.remove());
+  const d = document.createElement('div'); d.className = 'dmg' + (ult ? ' crit' : ''); d.textContent = '-' + dmg; d.style.setProperty('--c', m.color);
+  d.style.left = x2 + 'px'; d.style.top = (b.top - L.top + 10) + 'px'; fx.append(d);
+  d.animate([{ transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 }, { transform: 'translate(-50%,-90%) scale(1.15)', opacity: 1, offset: .25 }, { transform: 'translate(-50%,-180%) scale(1)', opacity: 0 }], { duration: 900, easing: 'ease-out' }).finished.then(() => d.remove());
+  to.mon.animate([{ transform: 'translateX(0)', filter: 'brightness(3)' }, { transform: 'translateX(-10px)' }, { transform: 'translateX(10px)', filter: 'brightness(1.6)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(0)', filter: 'none' }], { duration: 380 });
+  if (ult && !reduceMotion) {
+    const fl = document.createElement('div'); fl.className = 'flash'; fx.append(fl);
+    fl.animate([{ opacity: .55 }, { opacity: 0 }], { duration: 300 }).finished.then(() => fl.remove());
+  }
+  to.setHP(to.hp - dmg);
+  await wait(260);
+}
+async function faintFX(f) {
+  await f.mon.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(18%) scale(.9)', opacity: 0, filter: 'grayscale(1)' }], { duration: 700, easing: 'ease-in', fill: 'forwards' }).finished;
+}
+const DMG = it => it.type === 'choice' ? 12 : it.tier === 2 ? 22 : 16;
+
+/* =========================================================
+   Screens
+   ========================================================= */
+const screens = ['title', 'select', 'map', 'solo', 'duelSetup', 'duel', 'help'];
+let current = 'title', selReturn = 'map';
+function go(id) {
+  screens.forEach(s => $('#' + s).hidden = s !== id);
+  current = id;
+  closeOverlay();
+  renderMute();
+  if (id === 'map') renderMap();
+}
+const muteIcon = () => Store.d.mute
+  ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>`
+  : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>`;
+function renderMute() {
+  $$('[data-slot="mute"]').forEach(s => s.innerHTML = `<button class="iconbtn" data-act="mute" aria-label="${Store.d.mute ? '開啟音效' : '關閉音效'}" title="${Store.d.mute ? '音效已關閉' : '音效開啟中'}">${muteIcon()}</button>`);
+}
+const starSVG = on => `<svg class="star ${on ? 'on' : 'off'}" viewBox="0 0 24 24"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4L2.8 9.3l6.4-.8z" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; $('#stage').append(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+/* ---------- title ---------- */
+$('#lineup').innerHTML = beastSVG('frost') + beastSVG('night') + beastSVG('blaze');
+
+/* ---------- select ---------- */
+let selMon = Store.d.mon;
+function renderSelect() {
+  $('#selGrid').innerHTML = MON_IDS.map(id => { const m = MONS[id];
+    return `<button class="bcard" data-act="pickMon" data-id="${id}" aria-pressed="${id === selMon}">${beastSVG(id)}<b>${m.zh}</b><span class="en-name">${m.en}</span><span class="elem">${m.elem}屬性 · 必殺：${m.ult}</span></button>`; }).join('');
+}
+
+/* ---------- map ---------- */
+const unlocked = i => i === 0 || Store.d.stars[i - 1] > 0;
+function renderMap() {
+  const m = MONS[Store.d.mon];
+  $('#myChip').innerHTML = `${beastSVG(Store.d.mon)}<span>我的幻獸：<b>${m.zh}</b>　更換</span>`;
+  const total = Store.d.stars.reduce((a, b) => a + b, 0);
+  $('#starTotal').textContent = `已獲得 ${total} / 24 顆星`;
+  $('#route').innerHTML = STAGES.map((s, i) => {
+    const c = C(s.c), open = unlocked(i), st = Store.d.stars[i];
+    return `<button class="node${open ? '' : ' locked'}${s.boss ? ' boss' : ''}" data-act="stage" data-i="${i}" ${open ? '' : 'aria-disabled="true"'}>
+      <span class="no">${i + 1}</span>${flagSVG(c.key)}<span class="cn">${cp(c)}</span><span class="zh">${c.zh}${s.boss ? '・魔王關' : ''}</span>
+      <span class="topic">${open ? s.topic : '打贏上一關才開放'}</span>
+      <span class="stars">${[1, 2, 3].map(k => starSVG(k <= st)).join('')}</span></button>`;
+  }).join('');
+  const eOpen = Store.d.stars[7] > 0;
+  $('#endlessCard').innerHTML = `<div class="t"><b>無盡挑戰</b><p>${eOpen ? `魔物一隻接一隻來，看你能連續打倒幾隻。最高紀錄：<b>${Store.d.endless}</b> 隻` : '打贏第 8 關 the USA 之後開放。'}</p></div>
+    <button class="btn ${eOpen ? 'primary' : ''}" data-act="endless" ${eOpen ? '' : 'disabled'}>開始</button>`;
+}
+
+/* =========================================================
+   Solo battle
+   ========================================================= */
+let S = null; // solo state
+const soloPanel = new Panel($('#soloPanel'), res => soloAnswer(res));
+const soloFx = $('#solo .fx');
+
+function startSolo(mode, stageIdx = 0) {
+  const endless = mode === 'endless';
+  const st = endless ? null : STAGES[stageIdx];
+  S = { token: {}, endless, stageIdx, st, combo: 0, maxCombo: 0, correct: 0, total: 0, wrongs: [], kills: 0, busy: false, paused: false, timerLeft: 0, timerMax: 0 };
+  go('solo');
+  setupSoloEnemy();
+  S.player = new Fighter($('#fP'), { id: Store.d.mon, name: MONS[Store.d.mon].zh, max: 100, lunge: [18, -10] });
+  S.picker = endless
+    ? makePicker('all', () => (S.kills < 3 ? 1 : Math.random() < .6 ? 2 : 1))
+    : makePicker(st.pool, () => st.tier);
+  soloPanel.clear();
+  $('#charge').hidden = !(endless || st.timer);
+  setTimeout(() => nextSolo(S.token), 450);
+}
+function setupSoloEnemy() {
+  let id, pal, name, max, c;
+  if (S.endless) {
+    id = pick(MON_IDS); pal = EPAL[pick(Object.keys(EPAL))]; max = Math.min(200, 70 + S.kills * 15);
+    name = `第 ${S.kills + 1} 隻・${MONS[id].zh}`; c = COUNTRIES[S.kills % 8];
+    S.timerMax = Math.max(8, 16 - S.kills);
+  } else {
+    const st = S.st; id = st.enemy; pal = EPAL[st.pal]; max = st.hp; name = st.name; c = C(st.c); S.timerMax = st.timer;
+  }
+  const arena = $('#arena'), sky = S.endless ? STAGES[S.kills % 8].sky : S.st.sky;
+  arena.style.setProperty('--sky1', sky[0]); arena.style.setProperty('--sky2', sky[1]);
+  $('.bg', arena)?.remove(); arena.insertAdjacentHTML('afterbegin', bgSVG(c.key));
+  S.enemy = new Fighter($('#fE'), { id, pal, name, max, flip: true, lunge: [-18, 10] });
+  S.enemy.id = id;
+  $('#fE').classList.toggle('boss-aura', !!(S.st && S.st.boss));
+  $('#soloTitle').innerHTML = S.endless
+    ? `<b>無盡挑戰</b><span>已擊倒 ${S.kills} 隻・最高 ${Store.d.endless}</span>`
+    : `${flagSVG(c.key)}<b class="en">${cp(c)}</b><span>第 ${S.stageIdx + 1} 關・${S.st.topic}</span>`;
+}
+function nextSolo(tok) {
+  if (!S || S.token !== tok) return;
+  const it = S.picker();
+  soloPanel.show(it);
+  S.busy = false;
+  if (S.timerMax) startCharge(tok);
+}
+/* enemy charge timer */
+function startCharge(tok) {
+  S.timerLeft = S.timerMax * 1000; let last = performance.now(), warned = false;
+  const bar = $('#charge .track i'), box = $('#charge');
+  box.classList.remove('warn'); bar.style.width = '0%';
+  const loop = now => {
+    if (!S || S.token !== tok || S.busy) return;
+    if (!S.paused) S.timerLeft -= now - last;
+    last = now;
+    const frac = 1 - Math.max(0, S.timerLeft) / (S.timerMax * 1000);
+    bar.style.width = (frac * 100).toFixed(1) + '%';
+    $('#chargeLbl').textContent = `敵方蓄力 ${Math.ceil(Math.max(0, S.timerLeft) / 1000)} 秒`;
+    if (S.timerLeft < 4000 && !warned) { warned = true; box.classList.add('warn'); }
+    if (S.timerLeft <= 0) { soloPanel.locked = true; soloAnswer({ correct: false, timeout: true, item: soloPanel.item }); return; }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+async function soloAnswer(res) {
+  if (!S || S.busy) return;
+  const tok = S.token; S.busy = true; S.total++;
+  $('#charge').classList.remove('warn');
+  if (res.correct) {
+    S.correct++; S.combo++; S.maxCombo = Math.max(S.maxCombo, S.combo);
+    const ult = S.combo % 3 === 0; res.ult = ult;
+    const dmg = DMG(res.item) * (ult ? 2 : 1);
+    SFX.play('ok');
+    S.player.setCombo(S.combo);
+    await Promise.all([soloPanel.feedback(res, { okDelay: 500 }), attackFX(soloFx, S.player, S.enemy, dmg, ult, $('#arena'))]);
+    if (S.token !== tok) return;
+    if (S.enemy.hp <= 0) {
+      await faintFX(S.enemy);
+      if (S.token !== tok) return;
+      if (S.endless) {
+        S.kills++; SFX.play('win');
+        S.player.setHP(Math.min(100, S.player.hp + 20));
+        setupSoloEnemy();
+        S.enemy.mon.animate([{ opacity: 0, transform: 'translateX(30%)' }, { opacity: 1, transform: 'none' }], { duration: 500 });
+        await wait(600);
+        if (S.token !== tok) return;
+        return nextSolo(tok);
+      }
+      return soloEnd(true);
+    }
+  } else {
+    S.combo = 0; S.player.setCombo(0);
+    S.wrongs.push(res.item.review);
+    SFX.play('no');
+    const edmg = S.endless ? 16 + Math.min(10, S.kills) : 13 + S.stageIdx + (S.st.boss ? 3 : 0);
+    await Promise.all([soloPanel.feedback(res), attackFX(soloFx, S.enemy, S.player, edmg, false, null)]);
+    if (S.token !== tok) return;
+    if (S.player.hp <= 0) { await faintFX(S.player); if (S.token !== tok) return; return soloEnd(false); }
+  }
+  nextSolo(tok);
+}
+function soloEnd(win) {
+  const tok = S.token; S.busy = true;
+  const hpPct = S.player.hp / S.player.max;
+  let stars = 0, newBest = false, html = '';
+  if (S.endless) {
+    if (S.kills > Store.d.endless) { Store.d.endless = S.kills; newBest = true; Store.save(); }
+    SFX.play(S.kills ? 'win' : 'lose');
+    html += `<h3 class="win">挑戰結束</h3><p style="margin:0;font-size:18px">這次打倒了 <b style="font-size:28px;color:var(--gold)">${S.kills}</b> 隻魔物</p>${newBest ? '<div class="newbest">刷新最高紀錄！</div>' : `<div style="color:var(--muted)">最高紀錄：${Store.d.endless} 隻</div>`}`;
+  } else if (win) {
+    stars = hpPct >= .7 ? 3 : hpPct >= .4 ? 2 : 1;
+    const i = S.stageIdx;
+    if (stars > Store.d.stars[i]) Store.d.stars[i] = stars;
+    const score = S.correct * 10 + S.maxCombo * 5 + S.player.hp;
+    if (score > Store.d.best[i]) { Store.d.best[i] = score; newBest = true; }
+    Store.save(); SFX.play('win');
+    html += `<h3 class="win">勝利！</h3><div class="bigstars">${[1, 2, 3].map(k => starSVG(k <= stars)).join('')}</div>
+      <div style="color:var(--muted);font-size:14px">${stars < 3 ? `剩餘血量 70% 以上可以拿到 3 顆星` : '完美通關！'}</div>`;
+  } else {
+    SFX.play('lose');
+    html += `<h3 class="lose">戰敗了</h3><p style="margin:0;color:var(--muted)">把下面的題目再看一次，重新挑戰吧！</p>`;
+  }
+  html += `<div class="stats"><div><b>${S.correct} / ${S.total}</b><span>答對題數</span></div><div><b>${S.maxCombo}</b><span>最大連擊</span></div><div><b>${S.player.hp}</b><span>剩餘血量</span></div></div>`;
+  const uniq = []; S.wrongs.forEach(w => { if (!uniq.some(u => u.q === w.q)) uniq.push(w); });
+  if (uniq.length) html += `<div class="review"><h4>這場要再複習的題目</h4><ul>${uniq.slice(0, 6).map(w => `<li><span class="en">${esc(w.q)}</span><br>→ <b class="en a">${esc(w.a)}</b></li>`).join('')}</ul></div>`;
+  const nextOk = !S.endless && win && S.stageIdx < 7;
+  html += `<div class="row">
+    <button class="btn ${nextOk ? '' : 'primary'}" data-act="retry">再玩一次</button>
+    ${nextOk ? `<button class="btn primary" data-act="nextStage">下一關</button>` : ''}
+    <button class="btn ghost" data-act="toMap">回地圖</button></div>`;
+  if (!S.endless && win && S.stageIdx === 7) html = html.replace('<h3 class="win">勝利！</h3>', '<h3 class="win">環遊世界完成！</h3><div class="newbest">無盡挑戰已開放</div>');
+  showOverlay($('#solo'), html);
+}
+function showOverlay(host, html) {
+  closeOverlay();
+  const o = document.createElement('div'); o.className = 'overlay'; o.innerHTML = `<div class="dialog">${html}</div>`; $('#stage').append(o);
+}
+function closeOverlay() { $$('#stage > .overlay').forEach(o => o.remove()); }
+function quitSolo() { if (S) S.token = {}; S = null; closeOverlay($('#solo')); soloPanel.clear(); $$('#solo .fx > *').forEach(n => n.remove()); }
+
+/* =========================================================
+   Duel
+   ========================================================= */
+const DS = { scope: 'all', tier: 1, pick: { p1: null, p2: null }, ready: { p1: false, p2: false } };
+function renderDuelSetup() {
+  $('#scopeChips').innerHTML = `<span class="lbl">範圍</span>` + [['all', '全範圍'], ['words', '單字拼寫'], ['sent', '句型＋所有格']].map(([k, t]) => `<button class="chip" data-act="scope" data-k="${k}" aria-pressed="${DS.scope === k}">${t}</button>`).join('');
+  $('#tierChips').innerHTML = `<span class="lbl">拼字難度</span>` + [[1, '填空幾個字母'], [2, '拼出整個字']].map(([k, t]) => `<button class="chip" data-act="tier" data-k="${k}" aria-pressed="${DS.tier === k}">${t}</button>`).join('');
+  ['p1', 'p2'].forEach(p => {
+    const el = $(p === 'p1' ? '#pickP1' : '#pickP2');
+    el.innerHTML = `<div class="pick-head"><b>${p === 'p1' ? 'PLAYER 1' : 'PLAYER 2'}</b><span style="color:var(--muted);font-size:14px">${DS.pick[p] ? '已選：' + MONS[DS.pick[p]].zh : '點一隻幻獸'}</span>
+      <button class="btn ${DS.ready[p] ? 'ready' : 'primary'}" data-act="ready" data-p="${p}" ${DS.pick[p] ? '' : 'disabled'}>${DS.ready[p] ? '準備好了 ✓' : '準備'}</button></div>
+      <div class="pick-grid">${MON_IDS.map(id => `<button class="bcard" data-act="duelPick" data-p="${p}" data-id="${id}" aria-pressed="${DS.pick[p] === id}">${beastSVG(id)}<b>${MONS[id].zh}</b></button>`).join('')}</div>`;
+  });
+}
+let D = null;
+const duelPanels = {};
+function buildDuelHalf(p) {
+  const el = $(p === 'p1' ? '#dP1' : '#dP2');
+  el.innerHTML = `<div class="frow"><div class="mon"><div class="bob" data-k="art"></div></div>
+    <div class="info"><div class="who"><span class="dot"></span>${p === 'p1' ? 'PLAYER 1' : 'PLAYER 2'}<span class="clock" data-k="clock">3:00</span></div>
+    <div class="hpbox"><div class="nm"><b data-k="name"></b><span data-k="hpt"></span></div><div class="hp"><i></i></div><div class="combo" data-k="combo"></div></div></div></div>
+    <div class="qpanel"></div>`;
+  duelPanels[p] = new Panel($('.qpanel', el), res => duelAnswer(p, res));
+  return el;
+}
+function startDuel() {
+  go('duel');
+  const tok = {};
+  D = { token: tok, end: false, timeLeft: 180, players: {} };
+  const pool = DS.scope === 'all' ? 'all' : DS.scope === 'words' ? POOL_WORDS : POOL_SENT;
+  ['p1', 'p2'].forEach(p => {
+    const el = buildDuelHalf(p);
+    const f = new Fighter($('.frow', el), { id: DS.pick[p], name: MONS[DS.pick[p]].zh, max: 100, lunge: [0, -16] });
+    D.players[p] = { f, el, combo: 0, maxCombo: 0, correct: 0, total: 0, busy: true, picker: makePicker(pool, () => DS.tier) };
+    duelPanels[p].clear();
+  });
+  // countdown
+  (async () => {
+    for (const n of ['3', '2', '1', 'GO!']) {
+      if (D.token !== tok) return;
+      ['p1', 'p2'].forEach(p => { $$('.halfover', D.players[p].el).forEach(x => x.remove()); D.players[p].el.insertAdjacentHTML('beforeend', `<div class="halfover"><div class="count">${n}</div></div>`); });
+      SFX.play(n === 'GO!' ? 'go' : 'tick');
+      await wait(n === 'GO!' ? 500 : 750);
+    }
+    if (D.token !== tok) return;
+    ['p1', 'p2'].forEach(p => { $$('.halfover', D.players[p].el).forEach(x => x.remove()); duelNext(p, tok); });
+    duelClock(tok);
+  })();
+}
+function duelClock(tok) {
+  let last = performance.now();
+  const loop = now => {
+    if (!D || D.token !== tok || D.end) return;
+    D.timeLeft -= (now - last) / 1000; last = now;
+    const t = Math.max(0, Math.ceil(D.timeLeft)), txt = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    $$('#duel [data-k="clock"]').forEach(c => { if (c.textContent !== txt) c.textContent = txt; });
+    if (D.timeLeft <= 0) { duelEnd(null); return; }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+function duelNext(p, tok) {
+  if (!D || D.token !== tok || D.end) return;
+  const P = D.players[p]; duelPanels[p].show(P.picker()); P.busy = false;
+}
+async function duelAnswer(p, res) {
+  if (!D || D.end) return;
+  const tok = D.token, P = D.players[p], q = p === 'p1' ? 'p2' : 'p1', O = D.players[q];
+  if (P.busy) return; P.busy = true; P.total++;
+  if (res.correct) {
+    P.correct++; P.combo++; P.maxCombo = Math.max(P.maxCombo, P.combo);
+    const ult = P.combo % 3 === 0; res.ult = ult;
+    const dmg = DMG(res.item) * (ult ? 2 : 1);
+    SFX.play('ok'); P.f.setCombo(P.combo);
+    await Promise.all([duelPanels[p].feedback(res, { okDelay: 450 }), attackFX($('#duel .fx'), P.f, O.f, dmg, ult, P.el)]);
+    if (!D || D.token !== tok || D.end) return;
+    if (O.f.hp <= 0) return duelEnd(p);
+  } else {
+    P.combo = 0; P.f.setCombo(0); SFX.play('no');
+    await duelPanels[p].feedback(res, { wrongDelay: 3800 });
+  }
+  if (!D || D.token !== tok || D.end) return;
+  duelNext(p, tok);
+}
+async function duelEnd(winner) {
+  if (!D || D.end) return;
+  D.end = true;
+  const tok = D.token, P1 = D.players.p1, P2 = D.players.p2;
+  if (!winner) winner = P1.f.hp === P2.f.hp ? 'tie' : P1.f.hp > P2.f.hp ? 'p1' : 'p2';
+  ['p1', 'p2'].forEach(p => duelPanels[p].locked = true);
+  if (winner !== 'tie') { await faintFX(D.players[winner === 'p1' ? 'p2' : 'p1'].f); }
+  if (D.token !== tok) return;
+  SFX.play('win');
+  ['p1', 'p2'].forEach(p => {
+    const P = D.players[p], won = winner === p, tie = winner === 'tie';
+    P.el.insertAdjacentHTML('beforeend', `<div class="halfover"><h3 class="${won || tie ? 'win' : 'lose'}">${tie ? '平手！' : won ? '勝利！' : '再接再厲'}</h3>
+      <p>答對 ${P.correct} / ${P.total} 題・最大連擊 ${P.maxCombo}・剩餘血量 ${P.f.hp}</p>
+      <div class="row" style="margin-top:6px"><button class="btn primary" data-act="rematch">再戰一場</button><button class="btn ghost" data-act="duelSetupAgain">換幻獸</button><button class="btn ghost" data-act="homeFromDuel">回主選單</button></div></div>`);
+  });
+}
+function quitDuel() { if (D) { D.token = {}; D.end = true; } D = null; $$('#duel .fx > *').forEach(n => n.remove()); closeOverlay($('#duel')); }
+
+/* =========================================================
+   Actions
+   ========================================================= */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (b.getAttribute('aria-disabled') === 'true') { toast('先打贏上一關才能挑戰這裡'); return; }
+  switch (act) {
+    case 'mute': Store.d.mute = !Store.d.mute; Store.save(); renderMute(); if (!Store.d.mute) { SFX.init(); SFX.play('ok'); } break;
+    case 'solo': if (!Store.d.picked) { selReturn = 'title'; selMon = Store.d.mon; renderSelect(); go('select'); } else go('map'); break;
+    case 'duel': DS.ready = { p1: false, p2: false }; renderDuelSetup(); go('duelSetup'); break;
+    case 'help': go('help'); break;
+    case 'home': go('title'); break;
+    case 'back': go(selReturn); break;
+    case 'changeBeast': selReturn = 'map'; selMon = Store.d.mon; renderSelect(); go('select'); break;
+    case 'pickMon': selMon = b.dataset.id; SFX.play('tap'); renderSelect(); break;
+    case 'selDone': Store.d.mon = selMon; Store.d.picked = true; Store.save(); go('map'); break;
+    case 'stage': startSolo('stage', +b.dataset.i); break;
+    case 'endless': startSolo('endless'); break;
+    case 'pause':
+      if (!S || S.paused) break;
+      S.paused = true;
+      showOverlay($('#solo'), `<h3>暫停中</h3><div class="row"><button class="btn primary" data-act="resume">繼續戰鬥</button><button class="btn ghost" data-act="toMap">放棄，回地圖</button></div>`);
+      break;
+    case 'resume': if (S) S.paused = false; closeOverlay($('#solo')); break;
+    case 'retry': { const m = S.endless ? 'endless' : 'stage', i = S.stageIdx; quitSolo(); startSolo(m, i); break; }
+    case 'nextStage': { const i = S.stageIdx + 1; quitSolo(); startSolo('stage', i); break; }
+    case 'toMap': quitSolo(); go('map'); break;
+    case 'scope': DS.scope = b.dataset.k; renderDuelSetup(); break;
+    case 'tier': DS.tier = +b.dataset.k; renderDuelSetup(); break;
+    case 'duelPick': if (DS.ready[b.dataset.p]) break; DS.pick[b.dataset.p] = b.dataset.id; SFX.play('tap'); renderDuelSetup(); break;
+    case 'ready': {
+      const p = b.dataset.p; DS.ready[p] = !DS.ready[p]; SFX.play('tap'); renderDuelSetup();
+      if (DS.ready.p1 && DS.ready.p2) setTimeout(() => { if (current === 'duelSetup' && DS.ready.p1 && DS.ready.p2) startDuel(); }, 400);
+      break;
+    }
+    case 'dismissRot': $('#rotHint').classList.remove('armed'); break;
+    case 'duelQuit':
+      if (!D) break;
+      showOverlay($('#duel'), `<h3>要結束這場對戰嗎？</h3><div class="row"><button class="btn ghost" data-act="closeOv">繼續打</button><button class="btn primary" data-act="homeFromDuel">結束，回主選單</button></div>`);
+      break;
+    case 'closeOv': closeOverlay(); break;
+    case 'rematch': quitDuel(); startDuel(); break;
+    case 'duelSetupAgain': quitDuel(); DS.ready = { p1: false, p2: false }; renderDuelSetup(); go('duelSetup'); break;
+    case 'homeFromDuel': quitDuel(); go('title'); break;
+    case 'unlockAll': Store.d.stars = Store.d.stars.map(s => Math.max(s, 1)); Store.save(); toast('已解鎖全部關卡和無盡挑戰'); break;
+    case 'askReset':
+      showOverlay($('#help'), `<h3 style="font-size:24px">清除這台裝置的紀錄？</h3><p style="margin:0;color:var(--muted)">星星、關卡進度和最高紀錄都會歸零，無法復原。</p><div class="row"><button class="btn ghost" data-act="closeOv">取消</button><button class="btn primary" data-act="doReset">確定清除</button></div>`);
+      break;
+    case 'doReset': Store.reset(); closeOverlay($('#help')); toast('紀錄已清除'); break;
+  }
+});
+
+// Show the device-orientation hint once per visit only when it matters
+go('title');
+if (/[?&]selftest/.test(location.search)) window.__T = { GEN, STAGES, Store, startSolo, startDuel, DS, go, soloPanel, duelPanels, get S() { return S; }, get D() { return D; } };
+})();
+</script>
+
+</body>
+</html>
